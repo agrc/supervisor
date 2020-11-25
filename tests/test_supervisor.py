@@ -5,7 +5,7 @@ test_projectname.py
 A module that contains tests for the project module.
 """
 
-from projectname import main
+from supervisor import main
 
 
 def test_hello_returns_hi():

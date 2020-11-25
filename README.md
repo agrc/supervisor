@@ -1,28 +1,34 @@
 # agrc/python
 
-![Build Status](https://github.com/agrc/python/workflows/Build%20and%20Test/badge.svg)
-[![codecov](https://codecov.io/gh/agrc/python/branch/main/graph/badge.svg)](https://codecov.io/gh/agrc/python)
+![Build Status](https://github.com/agrc/supervisor/workflows/Build%20and%20Test/badge.svg)
+<!-- [![codecov](https://codecov.io/gh/agrc/python/branch/main/graph/badge.svg)](https://codecov.io/gh/agrc/python) -->
 
-AGRC's default Python project configuration/template
+A module for watching over scheduled processes: catching errors and sending messages for errors and/or summary logs.
 
-## Installation
+## Rationale
 
-1. Create new environment for the project
-   - With python 3 (without arcpy)
-     - `python -m venv .env`
-     - activate the environment `source .env/bin/activate`
-   - With conda
-     - `conda create --clone arcgispro-py3 --name PROJECT_NAME`
-1. Rename `src/projectname` folder to your desired project name
-1. Edit the `setup.py:name, url, project_urls, keywords, and entry_points` to reflect your new project name
-1. Edit the `test_projectname.py` to match your project name.
-   - You will have one `test_filename.py` file for each file in your `src` directory and you will write tests for the specific file in the `test_filename.py` file
-1. Navigate to [codecov.io](https://codecov.io/gh/agrc/python) and create a `CODECOV_TOKEN` [project secret](https://github.com/agrc/python/settings/secrets)
-1. Install an editable package for development
-   - `pip install -e ".[tests]"`
-   - add any project requirements to the `setup.py:install_requires` array
-1. Run the tests
-   - VSCode -> `Python: Run All Tests` or `Python: Debug All Tests`
-   - `ptw`
-     - **P**y**t**est **W**atch will restart the tests every time you save a file
-1. Bring your test code coverage to 80% or above!
+supervisor provides a framework for scripts scheduled through Windows' Task Scheduler to report any errors and/or any logs via the handlers in `messaging.py`. Task Scheduler's built-in email tools require an email server running on the machine(?) and can't handle custom targets like Slack.
+
+- Redirects exception handling to a custom handler
+- Provides custom messaging handler to direct errors and any other end-of-script output to e-mail and Slack
+  - Works with any SMTP server supported by Python's `smtp` library
+- Binds messaging settings and credentials to project (maybe not the best thing? Still have to change them project-by-project, but they will be in a consistent location in each project)
+
+## Usage
+
+1. In your script's entry point code (usually `main.py`), before any arg parsing:
+  - Create an `SMTP` object using the proper email server settings
+  - Instantiate a `Supervisor` object, passing in your `SMTP` object
+  - Call `.manage_exceptions()` on the `Supervisor` object to redirect exception handling
+1. Call `.send_report()` on the `Supervisor` object after your business logic:
+  - In `main.py` (or wherever you instantiated the object), passing the message and path to the log file
+  - OR
+  - Elsewhere in your business logic, having passed your `Supervisor` object through your logic as needed.
+
+## Development Environment
+
+1. Create new development conda environment
+   - `conda create --clone arcgispro-py3 --name PROJECT_NAME`
+1. Clone the repo
+1. Install in development mode
+   - `pip install -e ".[tests]"
