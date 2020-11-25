@@ -17,13 +17,13 @@ supervisor provides a framework for scripts scheduled through Windows' Task Sche
 ## Usage
 
 1. In your script's entry point code (usually `main.py`), before any arg parsing:
-  - Create an `SMTP` object using the proper email server settings
-  - Instantiate a `Supervisor` object, passing in your `SMTP` object
-  - Call `.manage_exceptions()` on the `Supervisor` object to redirect exception handling
+   - Create an `SMTP` object using the proper email server settings
+   - Instantiate a `Supervisor` object, passing in your `SMTP` object
+   - Call `.manage_exceptions()` on the `Supervisor` object to redirect exception handling
 1. Call `.send_report()` on the `Supervisor` object after your business logic:
-  - In `main.py` (or wherever you instantiated the object), passing the message and path to the log file
-  - OR
-  - Elsewhere in your business logic, having passed your `Supervisor` object through your logic as needed.
+   - In `main.py` (or wherever you instantiated the object), passing the message and path to the log file
+   - —OR—
+   - Elsewhere in your business logic, having passed your `Supervisor` object through your logic as needed.
 
 ## Development Environment
 
