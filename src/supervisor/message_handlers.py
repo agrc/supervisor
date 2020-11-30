@@ -5,17 +5,19 @@ message_handlers.py: Holds all the different message handlers
 from abc import ABC, abstractmethod
 
 
-class MessageHandler(ABC):
+class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
     """
     Base class for all message handlers.
     """
 
     @abstractmethod
     def send_message(self, message, log_path):
-        pass
+        """
+        Send a notification using the target-specific logic (email, slack, etc)
+        """
 
 
-class EmailHandler(MessageHandler):
+class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     """
     Send emails via the provided SMTP object
     """
@@ -27,7 +29,7 @@ class EmailHandler(MessageHandler):
         pass
 
 
-class SlackHandler(MessageHandler):
+class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     """
     Send a notification to Slack
     """
@@ -39,10 +41,10 @@ class SlackHandler(MessageHandler):
         pass
 
 
-class ConsoleHandler(MessageHandler):
+class ConsoleHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     """
     Print output to the console
     """
 
-    def send_message(self, message, log_path):
+    def send_message(self, message, log_path=None):
         print(message)
