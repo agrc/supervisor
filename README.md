@@ -22,7 +22,7 @@ supervisor provides a framework for scripts scheduled through Windows' Task Sche
 1. Clone the repo and install
    - `git clone https://github.com/agrc/supervisor`
    - `cd supervisor`
-   - `pip installe -e .`
+   - `pip install -e .`
 1. In your script's entry point code (usually `main.py`), before any arg parsing:
    - Create an `SMTP` object using the proper email server settings
    - Instantiate a `Supervisor` object, passing in your `SMTP` object

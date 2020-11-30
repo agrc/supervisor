@@ -9,22 +9,19 @@ class Supervisor:
     """
     Primary class; has the replacement error handler and a Messenger object to handle messaging
     """
-    pass
 
+    def __init__(self):
+        self.message_handlers = []
 
-class Messenger:
-    """
-    Keeps track of all the added message handlers and calls their specific messaging functions via its .send_messages method
-    """
-
-    def add_handler(self, handler: MessageHandler):
+    def add_message_handler(self, handler: MessageHandler):
         """
         Adds a message handler to the list of handlers
         """
-        pass
+        self.message_handlers.append(handler)
 
-    def notify(self, summary, log_path):
+    def notify(self, message, log_path):
         """
         Calls the .send_message() method on every handler
         """
-        pass
+        for handler in self.message_handlers:
+            handler.send_message(message, log_path)
