@@ -16,6 +16,10 @@ supervisor provides a framework for scripts scheduled through Windows' Task Sche
 
 ## Usage
 
+1. Clone the repo
+   - `git clone https://github.com/agrc/supervisor`
+1. Install
+   - `pip install -e`
 1. In your script's entry point code (usually `main.py`), before any arg parsing:
    - Create an `SMTP` object using the proper email server settings
    - Instantiate a `Supervisor` object, passing in your `SMTP` object
@@ -28,7 +32,8 @@ supervisor provides a framework for scripts scheduled through Windows' Task Sche
 ## Development Environment
 
 1. Create new development conda environment
-   - `conda create --clone arcgispro-py3 --name PROJECT_NAME`
+   - `conda create --clone arcgispro-py3 --name supervisor_dev`
 1. Clone the repo
+   - `git clone https://github.com/agrc/supervisor`
 1. Install in development mode
-   - `pip install -e ".[tests]"
+   - `pip install -e ".[tests]"`
