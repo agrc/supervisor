@@ -2,6 +2,10 @@
 This module holds the classes used by supervisor
 """
 
+import logging
+import os
+import sys
+
 from .message_handlers import MessageHandler
 
 
@@ -25,3 +29,33 @@ class Supervisor:
         """
         for handler in self.message_handlers:
             handler.send_message(message, log_path)
+
+    def _manage_exceptions(self):
+
+        log = logging.getLogger('forklift')
+
+        # Nesting so that we have access to Supervisor's self object
+        def global_exception_handler(exc_class, exc_object, tb):
+            """
+            exc_class: the type of the exception
+            exc_object: the exception object
+            tb: Traceback
+
+            Used to handle any uncaught exceptions. Formats an error message, logs it, and sends an email.
+            """
+            import traceback
+
+            last_traceback = (traceback.extract_tb(tb))[-1]
+            line_number = last_traceback[1]
+            file_name = last_traceback[0].split(".")[0]
+            error = os.linesep.join(traceback.format_exception(exc_class, exc_object, tb))
+
+            log.error(('global error handler line: %s (%s)' % (line_number, file_name)))
+            log.error(error)
+
+            log_file = None  # join(dirname(config.config_location), 'forklift.log')
+            # messaging.send_email(config.get_config_prop('notify'), f'Forklift Error on {socket.gethostname()}', error, [log_file])
+
+            self.notify(error, log_file)
+
+        sys.excepthook = global_exception_handler
