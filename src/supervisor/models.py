@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 
-from .message_handlers import MessageHandler
+from .message_handlers import ConsoleHandler, MessageHandler
 
 
 class Supervisor:
@@ -15,7 +15,13 @@ class Supervisor:
     """
 
     def __init__(self):
+
+        #: Set up our list of MessageHandlers and add a default ConsoleHandler
         self.message_handlers = []
+        self.message_handlers.append(ConsoleHandler())
+
+        #: Catch any uncaught exception with our custom exception handler
+        self._manage_exceptions()
 
     def add_message_handler(self, handler: MessageHandler):
         """

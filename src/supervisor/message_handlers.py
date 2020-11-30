@@ -17,7 +17,7 @@ class MessageHandler(ABC):
 
 class EmailHandler(MessageHandler):
     """
-    Handler for sending emails via the provided SMTP object
+    Send emails via the provided SMTP object
     """
 
     def __init__(self, smtp):
@@ -29,7 +29,7 @@ class EmailHandler(MessageHandler):
 
 class SlackHandler(MessageHandler):
     """
-    Handler for sending a notification to Slack
+    Send a notification to Slack
     """
 
     def __init__(self, details):
@@ -37,3 +37,12 @@ class SlackHandler(MessageHandler):
 
     def send_message(self, message, log_path):
         pass
+
+
+class ConsoleHandler(MessageHandler):
+    """
+    Print output to the console
+    """
+
+    def send_message(self, message, log_path):
+        print(message)
