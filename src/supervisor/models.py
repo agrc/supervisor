@@ -22,7 +22,7 @@ class Supervisor:
         self.message_handlers.append(ConsoleHandler())
 
         #: Catch any uncaught exception with our custom exception handler
-        self._manage_exceptions()
+        sys.excepthook = self._manage_exceptions()
 
     def add_message_handler(self, handler: MessageHandler):
         """
@@ -38,10 +38,13 @@ class Supervisor:
             handler.send_message(message, log_path)
 
     def _manage_exceptions(self):
+        """
+        A closure so that global_exception_handler() has access to self.notify to send notifications while still
+        maintaining the signature required by sys.excepthook
+        """
 
         log = logging.getLogger('forklift')
 
-        # Nesting so that we have access to Supervisor's self object
         def global_exception_handler(exc_class, exc_object, tb):  # pylint: disable=invalid-name
             """
             exc_class: the type of the exception
@@ -65,4 +68,4 @@ class Supervisor:
 
             self.notify(error, log_file)
 
-        sys.excepthook = global_exception_handler
+        return global_exception_handler
