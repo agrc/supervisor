@@ -1,4 +1,5 @@
 import sys
+import types
 
 from supervisor import message_handlers, models
 
@@ -13,19 +14,32 @@ def test_supervisor_constructor_does_proper_setup(mocker):
     assert exceptions_mock.called_once()
 
 
-def test_exception_handler_replacement(mocker):
-    global_exception_handler = mocker.patch.object(models.Supervisor._manage_exceptions, 'global_exception_handler')
-    item_mock = mocker.Mock()
-    models.Supervisor._manage_exceptions(item_mock)
+def test_exception_handler_replacement(mocker, capsys):
 
-    assert sys.excepthook == global_exception_handler
+    sim_sup = models.Supervisor()
+
+    assert 'global_exception_handler' in repr(sys.excepthook)
 
 
+#: These next three are difficult/impossible to test if global_exception_handler is a closure/inner method
 def test_global_exception_handler_is_called_on_exception(mocker):
     pass
 
 
 def test_global_exception_handler_calls_notify(mocker):
+    # notify = mocker.patch('supervisor.models.Supervisor.notify')
+    # models.Supervisor._manage_exceptions(mocker.Mock())
+
+    # sim_sup = models.Supervisor()
+
+    # print(type(sim_sup._manage_exceptions.__code__.co_consts[2].co_name))
+    # hacky_handler = types.FunctionType(sim_sup._manage_exceptions.__code__.co_consts[2], globals(), (), None)
+    # hacky_handler(mocker.Mock(), mocker.Mock(), mocker.Mock())
+
+    # exception_maker = mocker.Mock(side_effect=ValueError('foo'))
+    # exception_maker()
+
+    # assert notify.called_once()
     pass
 
 
