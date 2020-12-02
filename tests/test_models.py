@@ -45,3 +45,13 @@ def test_global_exception_handler_calls_notify(mocker):
 
 def test_global_exception_handler_creates_proper_error_message(mocker):
     pass
+
+
+def test_add_message_handler(mocker):
+    sim_sup = models.Supervisor()
+    handler_mock = mocker.Mock(name='handler_mock')
+
+    sim_sup.add_message_handler(handler_mock)
+
+    assert len(sim_sup.message_handlers) == 2
+    assert sim_sup.message_handlers[-1] == handler_mock
