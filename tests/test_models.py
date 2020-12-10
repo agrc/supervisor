@@ -7,7 +7,7 @@ from supervisor import message_handlers, models
 def test_supervisor_constructor_does_proper_setup(mocker):
     exceptions_mock = mocker.patch('supervisor.models.Supervisor._manage_exceptions')
 
-    sim_sup = models.Supervisor()
+    sim_sup = models.Supervisor('test project')
 
     assert len(sim_sup.message_handlers) == 1
     assert type(sim_sup.message_handlers[0]) == message_handlers.ConsoleHandler
@@ -16,7 +16,7 @@ def test_supervisor_constructor_does_proper_setup(mocker):
 
 def test_exception_handler_replacement(mocker, capsys):
 
-    sim_sup = models.Supervisor()
+    sim_sup = models.Supervisor('test')
 
     assert 'global_exception_handler' in repr(sys.excepthook)
 
@@ -48,7 +48,7 @@ def test_global_exception_handler_creates_proper_error_message(mocker):
 
 
 def test_add_message_handler(mocker):
-    sim_sup = models.Supervisor()
+    sim_sup = models.Supervisor('test')
     handler_mock = mocker.Mock(name='handler_mock')
 
     sim_sup.add_message_handler(handler_mock)

@@ -15,9 +15,10 @@ class Supervisor:
     Primary class; has the replacement error handler and a Messenger object to handle messaging
     """
 
-    def __init__(self):
+    def __init__(self, project_name):
 
         #: Set up our list of MessageHandlers and add a default ConsoleHandler
+        self.project_name = project_name
         self.message_handlers = []
         self.message_handlers.append(ConsoleHandler())
 
@@ -43,7 +44,7 @@ class Supervisor:
         maintaining the signature required by sys.excepthook
         """
 
-        log = logging.getLogger('forklift')
+        log = logging.getLogger(self.project_name)
 
         def global_exception_handler(exc_class, exc_object, tb):  # pylint: disable=invalid-name
             """
@@ -65,7 +66,7 @@ class Supervisor:
             log_file = None  # join(dirname(config.config_location), 'forklift.log')
             # messaging.send_email(config.get_config_prop('notify'),
             # f'Forklift Error on {socket.gethostname()}', error, [log_file])
-
-            self.notify(error, log_file)
+            message_details = {'message': error, 'subject': f'{self.project_name}: ERROR'}
+            self.notify(message_details, log_file)
 
         return global_exception_handler
