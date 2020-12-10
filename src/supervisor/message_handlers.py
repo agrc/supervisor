@@ -28,7 +28,8 @@ class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
 
         message_details: A dictionary of the different parts. Available keys:
                             message:    The messages as a string
-                            log_path:   A Path object to the log file
+                            attachments:   Path objects to any attachments
+                            log_path:   A Path object to the log file,
                             subject:    Email subject as a string
                             project_name:   Project name as a string
         """
@@ -64,11 +65,14 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         smtp_port = self.email_settings['smtpPort']
 
         if None in [from_address, to_addresses, smtp_server, smtp_port]:
-            log.warning(
-                'Required environment variables for sending emails do not exist. No emails sent. See README.md for more details.'
-            )
+            log.warning('Required environment variables for sending emails do not exist. No emails sent.')
 
             return
+
+        body = message_details['message']
+        subject = message_details['subject']
+        attachments = []
+        #: TODO: add attachments, logfile to this list
 
         #: Split recipient addresses if needed.
         if not isinstance(to_addresses, str):
