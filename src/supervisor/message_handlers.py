@@ -76,7 +76,6 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Build and return a MIMEMultipart() message
         """
 
-        body = message_details.message
         subject = message_details.subject
         project_name = message_details.project_name
 
@@ -88,11 +87,8 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             attachments.extend(message_details.attachments)
 
         #: Use body as message if it's already a MIMEMultipart, otherwise create a new MIMEMultipart as the message
-        if isinstance(body, str):
-            message = MIMEMultipart()
-            message.attach(MIMEText(body, 'html'))
-        else:
-            message = body
+        message = MIMEMultipart()
+        message.attach(MIMEText(message_details.message, 'html'))
 
         distributions = pkg_resources.require(project_name)
         version = distributions[0].version

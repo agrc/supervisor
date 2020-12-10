@@ -40,4 +40,4 @@ def test_build_message_without_attachments(mocker):
     assert test_message.get('To') == 'foo@example.com'
     assert test_message.get('From') == 'testing@example.com'
     assert test_message.get_payload()[0].get_payload() == 'test_message'
-    assert test_message.get_payload()[1].get_payload() == '<p>test version: 0</p>'
+    assert test_message.get_payload()[1].get_payload() == '<p>testing version: 0</p>'
