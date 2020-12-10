@@ -28,7 +28,7 @@ class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
 
         message_details: A dictionary of the different parts. Available keys:
                             message:    The messages as a string
-                            attachments:   Path objects to any attachments
+                            attachments:   Single or List of Path object(s) to any attachment(s)
                             log_path:   A Path object to the log file,
                             subject:    Email subject as a string
                             project_name:   Project name as a string
@@ -54,8 +54,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Send an email.
         """
 
-        project_name = message_details['project_name']
-        log = logging.getLogger(project_name)
+        log = logging.getLogger(message_details['project_name'])
 
         #: Configure outgoing settings
         # email_server = get_config_prop('email')
@@ -69,16 +68,32 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
             return
 
+        message = self._build_message(message_details)
+
+        #: Send message
+        with SMTP(smtp_server, smtp_port) as smtp:
+            smtp.sendmail(from_address, to_addresses, message.as_string())
+
+        # return smtp
+
+    def _build_message(self, message_details):
+        """
+        Build and return a MIMEMultipart() message
+        """
+
         body = message_details['message']
         subject = message_details['subject']
-        attachments = []
-        #: TODO: add attachments, logfile to this list
+        project_name = message_details['project_name']
 
-        #: Split recipient addresses if needed.
-        if not isinstance(to_addresses, str):
-            to_addresses_joined = ','.join(to_addresses)
-        else:
-            to_addresses_joined = to_addresses
+        #: Build attachments list
+        attachments = []
+        if message_details['log_file']:
+            attachments.append(message_details['log_file'])
+        if message_details['attachments']:
+            if isinstance(message_details['attachments'], list):
+                attachments.extend(message_details['attachments'])
+            else:
+                attachments.append(message_details['attachments'])
 
         #: Use body as message if it's already a MIMEMultipart, otherwise create a new MIMEMultipart as the message
         if isinstance(body, str):
@@ -90,36 +105,39 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         version = MIMEText(f'<p>{project_name} version: {pkg_resources.require(project_name)[0].version}</p>', 'html')
         message.attach(version)
 
+        #: Split recipient addresses if needed.
+        to_addresses = self.email_settings['to_addresses']
+        if not isinstance(to_addresses, str):
+            to_addresses_joined = ','.join(to_addresses)
+        else:
+            to_addresses_joined = to_addresses
+
         #: Add various elements of the message
         message['Subject'] = subject
-        message['From'] = from_address
+        message['From'] = self.email_settings['from_address']
         message['To'] = to_addresses_joined
 
         #: gzip all attachments (logs) and add to message
         for original_path in attachments:
             path = Path(original_path)  #: convert to a Path if it isn't already
             if path.is_file():
-                with (open(path, 'rb')) as log_file, io.BytesIO() as encoded_log:
-                    self._gzip_file(log_file, encoded_log)
+                message.attach(self._build_gzip_attachment(path))
 
-                    attachment = MIMEApplication(encoded_log.getvalue(), 'x-gzip')
-                    attachment.add_header('Content-Disposition', 'attachment; filename="{}"'.format(path.name + '.gz'))
+        return message
 
-                    message.attach(attachment)
-
-        #: Send message
-        with SMTP(smtp_server, smtp_port) as smtp:
-            smtp.sendmail(from_address, to_addresses, message.as_string())
-
-        # return smtp
-
-    def _gzip_file(self, input_file_object, output_stream):
+    def _build_gzip_attachment(self, input_path):
         """
-        GZip input_file_object into in-memory io.BytesIO output_stream
+        GZip input_path and return as a MIMEApplication object
         """
-        gzipper = gzip.GzipFile(mode='wb', fileobj=output_stream)
-        gzipper.writelines(input_file_object)
-        gzipper.close()
+        with (open(input_path, 'rb')) as input_file_object, io.BytesIO() as output_stream:
+            gzipper = gzip.GzipFile(mode='wb', fileobj=output_stream)
+            gzipper.writelines(input_file_object)
+            gzipper.close()
+            attachment = MIMEApplication(output_stream.getvalue(), 'x-gzip')
+            attachment_filename = input_path.name + '.gz'
+            attachment.add_header('Content-Disposition', f'attachment; filename="{attachment_filename}"')
+
+            return attachment
 
 
 class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
