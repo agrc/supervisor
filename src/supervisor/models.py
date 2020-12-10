@@ -70,3 +70,18 @@ class Supervisor:
             self.notify(message_details)
 
         return global_exception_handler
+
+
+class MessageDetails:  # pylint: disable=too-few-public-methods
+    """
+    Data structure for message details to allow dot-access and null item checks.
+
+    TODO: Implement true Null-Object pattern.
+    """
+
+    def __init__(self):
+        self.message = ''
+        self.attachments = []  #: Strings or Paths
+        self.log_file = None  #: Path
+        self.subject = ''
+        self.project_name = ''
