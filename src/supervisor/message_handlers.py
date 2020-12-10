@@ -11,7 +11,7 @@ class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
     """
 
     @abstractmethod
-    def send_message(self, message_details, log_path):
+    def send_message(self, message_details):
         """
         Send a notification using the target-specific logic (email, slack, etc)
         """
@@ -26,7 +26,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         self.smtp = smtp
         self.email_settings = email_settings
 
-    def send_message(self, message_details, log_path):
+    def send_message(self, message_details):
         """
         to: string | string[]
         subject: string
@@ -101,7 +101,7 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     def __init__(self, details):
         pass
 
-    def send_message(self, message_details, log_path):
+    def send_message(self, message_details):
         pass
 
 
@@ -110,5 +110,5 @@ class ConsoleHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     Print output to the console
     """
 
-    def send_message(self, message_details, log_path=None):
+    def send_message(self, message_details):
         print(message_details['message'])
