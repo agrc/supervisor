@@ -100,9 +100,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             path = Path(original_path)  #: convert to a Path if it isn't already
             if path.is_file():
                 with (open(path, 'rb')) as log_file, io.BytesIO() as encoded_log:
-                    gzipper = gzip.GzipFile(mode='wb', fileobj=encoded_log)
-                    gzipper.writelines(log_file)
-                    gzipper.close()
+                    self._gzip_file(log_file, encoded_log)
 
                     attachment = MIMEApplication(encoded_log.getvalue(), 'x-gzip')
                     attachment.add_header('Content-Disposition', 'attachment; filename="{}"'.format(path.name + '.gz'))
@@ -114,6 +112,14 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             smtp.sendmail(from_address, to_addresses, message.as_string())
 
         # return smtp
+
+    def _gzip_file(self, input_file_object, output_stream):
+        """
+        GZip input_file_object into in-memory io.BytesIO output_stream
+        """
+        gzipper = gzip.GzipFile(mode='wb', fileobj=output_stream)
+        gzipper.writelines(input_file_object)
+        gzipper.close()
 
 
 class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
