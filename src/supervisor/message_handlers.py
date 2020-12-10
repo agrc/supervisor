@@ -13,7 +13,8 @@ from pathlib import Path
 from smtplib import SMTP
 
 import pkg_resources
-import requests
+
+# import requests
 
 
 class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
@@ -26,14 +27,8 @@ class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
         """
         Send a notification using the target-specific logic (email, slack, etc)
 
-        message_details: A dictionary of the different parts. Available keys:
-                            message:    The messages as a string
-                            attachments:   Single or List of Path object(s) to any attachment(s)
-                            log_path:   A Path object to the log file,
-                            subject:    Email subject as a string
-                            project_name:   Project name as a string
+        message_details: A MessageDetails object
         """
-        #: TODO: Should message details be an object so that we can have defaults and dot-notation access?
 
 
 class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
@@ -54,7 +49,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Send an email.
         """
 
-        log = logging.getLogger(message_details['project_name'])
+        log = logging.getLogger(message_details.project_name)
 
         #: Configure outgoing settings
         # email_server = get_config_prop('email')
@@ -81,19 +76,16 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Build and return a MIMEMultipart() message
         """
 
-        body = message_details['message']
-        subject = message_details['subject']
-        project_name = message_details['project_name']
+        body = message_details.message
+        subject = message_details.subject
+        project_name = message_details.project_name
 
         #: Build attachments list
         attachments = []
-        if message_details['log_file']:
-            attachments.append(message_details['log_file'])
-        if message_details['attachments']:
-            if isinstance(message_details['attachments'], list):
-                attachments.extend(message_details['attachments'])
-            else:
-                attachments.append(message_details['attachments'])
+        if message_details.log_file:
+            attachments.append(message_details.log_file)
+        if message_details.attachments:
+            attachments.extend(message_details.attachments)
 
         #: Use body as message if it's already a MIMEMultipart, otherwise create a new MIMEMultipart as the message
         if isinstance(body, str):
@@ -125,7 +117,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return message
 
-    def _build_gzip_attachment(self, input_path):
+    def _build_gzip_attachment(self, input_path):  #pylint: disable=no-self-use
         """
         GZip input_path and return as a MIMEApplication object
         """
@@ -158,4 +150,4 @@ class ConsoleHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     """
 
     def send_message(self, message_details):
-        print(message_details['message'])
+        print(message_details.message)
