@@ -27,5 +27,5 @@ if __name__ == '__main__':
     #: the code that executes if you run the file or module directly
     GREETING = hello()
 
-    sim_sup = Supervisor()
+    sim_sup = Supervisor('random')
     raise ValueError('random error here')
