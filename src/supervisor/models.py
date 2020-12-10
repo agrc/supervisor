@@ -31,12 +31,12 @@ class Supervisor:
         """
         self.message_handlers.append(handler)
 
-    def notify(self, message, log_path):
+    def notify(self, message):
         """
         Calls the .send_message() method on every handler
         """
         for handler in self.message_handlers:
-            handler.send_message(message, log_path)
+            handler.send_message(message)
 
     def _manage_exceptions(self):
         """
@@ -66,7 +66,7 @@ class Supervisor:
             log_file = None  # join(dirname(config.config_location), 'forklift.log')
             # messaging.send_email(config.get_config_prop('notify'),
             # f'Forklift Error on {socket.gethostname()}', error, [log_file])
-            message_details = {'message': error, 'subject': f'{self.project_name}: ERROR'}
-            self.notify(message_details, log_file)
+            message_details = {'message': error, 'subject': f'{self.project_name}: ERROR', 'log_path': log_file}
+            self.notify(message_details)
 
         return global_exception_handler
