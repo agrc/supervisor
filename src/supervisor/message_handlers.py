@@ -52,7 +52,6 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         log = logging.getLogger(message_details.project_name)
 
         #: Configure outgoing settings
-        # email_server = get_config_prop('email')
         from_address = self.email_settings['from_address']
         to_addresses = self.email_settings['to_addresses']
         smtp_server = self.email_settings['smtpServer']
@@ -68,8 +67,6 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         #: Send message
         with SMTP(smtp_server, smtp_port) as smtp:
             smtp.sendmail(from_address, to_addresses, message.as_string())
-
-        # return smtp
 
     def _build_message(self, message_details):
         """
@@ -91,9 +88,10 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         message.attach(MIMEText(message_details.message, 'html'))
 
         distributions = pkg_resources.require(project_name)
-        version = distributions[0].version
-        version = MIMEText(f'<p>{project_name} version: {version}</p>', 'html')
-        message.attach(version)
+        if distributions:
+            version = distributions[0].version
+            version = MIMEText(f'<p>{project_name} version: {version}</p>', 'html')
+            message.attach(version)
 
         #: Split recipient addresses if needed.
         to_addresses = self.email_settings['to_addresses']
