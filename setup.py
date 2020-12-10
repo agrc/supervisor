@@ -33,7 +33,7 @@ setup(
     },
     keywords=['gis'],
     install_requires=[
-        # 'package==1.0.*'
+        'requests',
     ],
     extras_require={
         'tests': [
