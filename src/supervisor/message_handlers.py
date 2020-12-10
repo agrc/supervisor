@@ -14,7 +14,13 @@ class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
     def send_message(self, message_details):
         """
         Send a notification using the target-specific logic (email, slack, etc)
+
+        message_details: A dictionary of the different parts. Available keys:
+                            message:    The messages as a string
+                            log_path:   A Path to the log file
+                            subject:    Email subject as a string
         """
+        #: TODO: Should message details be an object so that we can have defaults and dot-notation access?
 
 
 class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
