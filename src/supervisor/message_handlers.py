@@ -94,7 +94,9 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         else:
             message = body
 
-        version = MIMEText(f'<p>{project_name} version: {pkg_resources.require(project_name)[0].version}</p>', 'html')
+        distributions = pkg_resources.require(project_name)
+        version = distributions[0].version
+        version = MIMEText(f'<p>{project_name} version: {version}</p>', 'html')
         message.attach(version)
 
         #: Split recipient addresses if needed.
