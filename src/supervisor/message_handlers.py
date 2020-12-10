@@ -2,7 +2,18 @@
 message_handlers.py: Holds all the different message handlers
 """
 
+import gzip
+import io
+import logging
 from abc import ABC, abstractmethod
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from pathlib import Path
+from smtplib import SMTP
+
+import pkg_resources
+import requests
 
 
 class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
@@ -17,8 +28,9 @@ class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
 
         message_details: A dictionary of the different parts. Available keys:
                             message:    The messages as a string
-                            log_path:   A Path to the log file
+                            log_path:   A Path object to the log file
                             subject:    Email subject as a string
+                            project_name:   Project name as a string
         """
         #: TODO: Should message details be an object so that we can have defaults and dot-notation access?
 
@@ -28,8 +40,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     Send emails via the provided SMTP object
     """
 
-    def __init__(self, smtp, email_settings):
-        self.smtp = smtp
+    def __init__(self, email_settings):
         self.email_settings = email_settings
 
     def send_message(self, message_details):
@@ -42,14 +53,17 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Send an email.
         """
 
+        project_name = message_details['project_name']
+        log = logging.getLogger(project_name)
+
         #: Configure outgoing settings
         # email_server = get_config_prop('email')
         from_address = self.email_settings['from_address']
-        to = self.email_settings['to_addresses']
-        # smtp_server = email_server['smtpServer']
-        # smtp_port = email_server['smtpPort']
+        to_addresses = self.email_settings['to_addresses']
+        smtp_server = self.email_settings['smtpServer']
+        smtp_port = self.email_settings['smtpPort']
 
-        if None in [from_address, smtp_server, smtp_port]:
+        if None in [from_address, to_addresses, smtp_server, smtp_port]:
             log.warning(
                 'Required environment variables for sending emails do not exist. No emails sent. See README.md for more details.'
             )
@@ -57,10 +71,10 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             return
 
         #: Split recipient addresses if needed.
-        if not isinstance(to, str):
-            to_addresses = ','.join(to)
+        if not isinstance(to_addresses, str):
+            to_addresses_joined = ','.join(to_addresses)
         else:
-            to_addresses = to
+            to_addresses_joined = to_addresses
 
         #: Use body as message if it's already a MIMEMultipart, otherwise create a new MIMEMultipart as the message
         if isinstance(body, str):
@@ -69,13 +83,13 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         else:
             message = body
 
-        version = MIMEText(f'<p>Auditor version: {pkg_resources.require("auditor")[0].version}</p>', 'html')
+        version = MIMEText(f'<p>{project_name} version: {pkg_resources.require(project_name)[0].version}</p>', 'html')
         message.attach(version)
 
         #: Add various elements of the message
         message['Subject'] = subject
         message['From'] = from_address
-        message['To'] = to_addresses
+        message['To'] = to_addresses_joined
 
         #: gzip all attachments (logs) and add to message
         for original_path in attachments:
@@ -92,11 +106,10 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
                     message.attach(attachment)
 
         #: Send message
-        # smtp = SMTP(smtp_server, smtp_port)
-        smtp.sendmail(from_address, to, message.as_string())
-        # smtp.quit()
+        with SMTP(smtp_server, smtp_port) as smtp:
+            smtp.sendmail(from_address, to_addresses, message.as_string())
 
-        return smtp
+        # return smtp
 
 
 class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
