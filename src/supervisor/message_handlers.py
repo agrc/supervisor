@@ -20,6 +20,9 @@ import pkg_resources
 import python_http_client
 import sendgrid
 from sendgrid.helpers.mail import Attachment, Content, Email, FileContent, FileName, FileType, Mail, To
+import requests
+
+from . import slack
 
 
 class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
@@ -419,15 +422,73 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
 
 class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
-    """
-    Send a notification to Slack
+    """Send a notification to Slack
+
+    Attributes
+    ----------
+    url : str
+        The Slack webhook URL
+
+    Methods
+    -------
+    send_message(message_details)
+        Send a message to Slack
+    _build_messages(message_details)
+        Format message_details into Slack-able formatted Blocks
+    _post_messages(messages)
+        Post formatted messages to Slack via requests library
+
     """
 
-    def __init__(self, details):
-        pass
+    def __init__(self, url, build_method=None):
+        self.url = url
+        #: FIXME: Replace with an instance of SlackMessageBuilder
+        if build_method:
+            self.build_method = build_method
+        else:
+            self.build_method = self._build_messages
 
     def send_message(self, message_details):
-        pass
+        """Send a message to Slack
+
+        Parameters
+        ----------
+        message_details : MessageDetails
+            The message information
+        """
+        #: FIXME: Replace with an instance of SlackMessageBuilder
+        messages = self._build_messages(message_details)
+        self._post_messages(messages)
+
+    #: FIXME: Replace with an instance of SlackMessageBuilder
+    def _build_messages(self, message_details):
+        """Format message_details into an appropriate slack Message"""
+        return 'foo'
+
+    def _post_messages(self, messages):
+        """Post messages to slack via the webhook url
+
+        Parameters
+        ----------
+        messages : list
+            the Blocks to send to slack split at the maximum value of 50
+        """
+
+        if messages is None or self.url is None:
+            return
+
+        #: Make sure messages is a list
+        if not isinstance(messages, list):
+            messages = [messages]
+
+        #: Post messages
+        for message in messages:
+            response = requests.post(self.url, data=message, headers={'Content-Type': 'application/json'})
+
+            if response.status_code != 200:
+                raise ValueError(
+                    f'Request to slack returned an error {response.status_code}, the response is: {response.text}'
+                )
 
 
 class ConsoleHandler(MessageHandler):  # pylint: disable=too-few-public-methods
