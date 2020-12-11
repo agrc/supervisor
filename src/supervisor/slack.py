@@ -234,6 +234,35 @@ def ship_report_to_blocks(report):
     return message.get_messages()
 
 
+class MessageBuilder(ABC):
+    """Abstract Base Class to format messages for posting to Slack via webhook URLs
+
+    Methods
+    -------
+    build_message(data)
+        Create a Slack message from any data simple or complex data structure
+    """
+
+    @abstractmethod
+    def build_message(self, data):
+        """Create a Slack message from any simple or complex data structure
+
+        Parameters
+        ----------
+        data : any
+            The data to format into Slack message.
+
+        Returns
+        -------
+        messages
+            A list of JSON-formatted strings for the blocks via Message.get_messages()
+        """
+
+
+#: TODO: concrete implementation of MessageBuilder for Auditor reports (but not in here - in Auditor proper?)
+#: TODO: Basic implementation that just formats text?
+
+
 class BlockType(Enum):
     """Available block type enums"""
 
