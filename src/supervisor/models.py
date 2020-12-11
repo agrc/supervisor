@@ -15,12 +15,13 @@ class Supervisor:
     Primary class; has the replacement error handler and a Messenger object to handle messaging
     """
 
-    def __init__(self, project_name):
+    def __init__(self, project_name, log_path=None):
 
         #: Set up our list of MessageHandlers and add a default ConsoleHandler
         self.project_name = project_name
         self.message_handlers = []
         self.message_handlers.append(ConsoleHandler())
+        self.log_path = log_path
 
         #: Catch any uncaught exception with our custom exception handler
         sys.excepthook = self._manage_exceptions()
@@ -63,10 +64,15 @@ class Supervisor:
             log.error(f'global error handler line: {line_number} ({file_name})')  # pylint: disable=logging-fstring-interpolation
             log.error(error)
 
-            log_file = None  # join(dirname(config.config_location), 'forklift.log')
+            # log_file = None  # join(dirname(config.config_location), 'forklift.log')
+            # log_file = log.handlers[0].stream.name
             # messaging.send_email(config.get_config_prop('notify'),
             # f'Forklift Error on {socket.gethostname()}', error, [log_file])
-            message_details = {'message': error, 'subject': f'{self.project_name}: ERROR', 'log_path': log_file}
+            # message_details = {'message': error, 'subject': f'{self.project_name}: ERROR', 'log_path': log_file}
+            message_details = MessageDetails()
+            message_details.message = error
+            message_details.subject = f'{self.project_name}: ERROR'
+            message_details.log_file = self.log_path
             self.notify(message_details)
 
         return global_exception_handler
