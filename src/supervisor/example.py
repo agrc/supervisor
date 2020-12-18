@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # * coding: utf8 *
 """
-a description of what this module does.
-this file is for testing linting...
+An example implementation using Supervisor to catch an error and email both the traceback and the logfile
 """
 
 import logging
@@ -12,25 +11,7 @@ from pathlib import Path
 from supervisor.message_handlers import EmailHandler
 from supervisor.models import Supervisor
 
-TEST = 'test'
-
-
-def hello():
-    """doc string
-    """
-    print('this is good')
-
-    print(
-        'this is a really, really, really, really, really, really, really, really, really, really, really, really,'
-        'really long line'
-    )
-
-    return 'hi'
-
-
 if __name__ == '__main__':
-    #: the code that executes if you run the file or module directly
-    GREETING = hello()
 
     #: Set up a rotating file handler for the report log
     test_path = Path(r'c:\temp\supervisor_log.txt')
@@ -41,15 +22,22 @@ if __name__ == '__main__':
     test_logger.addHandler(test_handler)
     test_logger.setLevel(logging.DEBUG)
 
+    #: Add somethign to the log
     test_logger.info('test run')
 
+    #: Instantiate a Supervisor object
     sim_sup = Supervisor('supervisor', test_path)
+
+    #: Specify the email server and addresses
     email_settings = {
         'smtpServer': 'send.state.ut.us',
         'smtpPort': 25,
         'from_address': 'noreply@utah.gov',
         'to_addresses': 'jdadams@utah.gov',
     }
+
+    #: Instantiate a new EmailHandler and register it with our Supervisor
     sim_sup.add_message_handler(EmailHandler(email_settings))
 
+    #: Trigger Supervisor's error handler
     raise ValueError('random error here')
