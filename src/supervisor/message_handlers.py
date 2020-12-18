@@ -14,39 +14,56 @@ from smtplib import SMTP
 
 import pkg_resources
 
-# import requests
-
 
 class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
-    """
-    Base class for all message handlers.
+    """Base class for all message handlers.
+
+    Methods
+    -------
+    send_message(message_details)
+        Parse a MessageDetails object and send a message using handler-specific logic
     """
 
     @abstractmethod
     def send_message(self, message_details):
-        """
-        Send a notification using the target-specific logic (email, slack, etc)
+        """Send a notification using the target-specific logic (email, slack, etc)
 
-        message_details: A MessageDetails object
+        Parameters
+        ----------
+        message_details : MessageDetails
+            The data to be sent in the notification
         """
 
 
 class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
-    """
-    Send emails via the provided SMTP object
+    """Send a notification via email
+
+    Attributes
+    ----------
+    email_settings : dict
+        From and To addresses, SMTP Server and Port
+
+    Methods
+    -------
+    send_message(message_details)
+        Build a message, create an SMTP object, and send the message
+    _build_message(message_details)
+        Create email to be sent as a MIMEMultipart object
+    _build_gzip_attachment(input_path)
+        gzip input_path into a MIMEApplication object
     """
 
     def __init__(self, email_settings):
         self.email_settings = email_settings
 
     def send_message(self, message_details):
-        """
-        to: string | string[]
-        subject: string
-        body: string | MIMEMultipart
-        attachments: string[] - paths to text files to attach to the email
+        """Build a message, create an SMTP object, and send the message
 
-        Send an email.
+        Parameters
+        ----------
+        mesage_details : MessageDetails
+            Passed through to _build_message. Must have .message, .subject, .project_name; may
+            have .log_file and .attachments
         """
 
         log = logging.getLogger(message_details.project_name)
@@ -69,8 +86,17 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             smtp.sendmail(from_address, to_addresses, message.as_string())
 
     def _build_message(self, message_details):
-        """
-        Build and return a MIMEMultipart() message
+        """Create email to be sent as a MIMEMultipart object
+
+        Parameters
+        ----------
+        mesage_details : MessageDetails
+            Must have .message, .subject, .project_name; may have .log_file and .attachments
+
+        Returns
+        -------
+        message : MIMEMultipart
+            A formatted message that can be passed to smtp.sendmail as message.as_string()
         """
 
         subject = message_details.subject
@@ -115,8 +141,17 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return message
 
     def _build_gzip_attachment(self, input_path):  #pylint: disable=no-self-use
-        """
-        GZip input_path and return as a MIMEApplication object
+        """gzip input_path into a MIMEApplication object
+
+        Parameters
+        ----------
+        input_path : Path
+            The on-disk path to the file to gzip. Will be opened in 'rb' mode.
+
+        Returns
+        -------
+        attachment : MIMEApplication
+            The gzip'ed contents of input_path ready to attach to a MIMEMultipart message.
         """
         with (open(input_path, 'rb')) as input_file_object, io.BytesIO() as output_stream:
             gzipper = gzip.GzipFile(mode='wb', fileobj=output_stream)
@@ -142,9 +177,14 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
 
 class ConsoleHandler(MessageHandler):  # pylint: disable=too-few-public-methods
-    """
-    Print output to the console
+    """Send a notification to the console.
+
+    Methods
+    -------
+    send_message(message_details)
+        Print message_details.message
     """
 
     def send_message(self, message_details):
+        """Print message_details.message"""
         print(message_details.message)
