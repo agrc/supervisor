@@ -10,7 +10,7 @@ A module for watching over scheduled processes: catching errors and sending mess
 supervisor provides a framework for scripts scheduled through Windows' Task Scheduler to report any errors and/or any logs via the handlers in `messaging.py`. Task Scheduler's built-in email tools require an email server running on the machine(?) and can't handle custom targets like Slack.
 
 - Redirects exception handling to a custom handler
-- Provides custom messaging handler to direct errors and any other end-of-script output to e-mail and Slack
+- Provides custom messaging handler to direct errors and any other end-of-script output to e-mail and (eventually) Slack
   - Works with any SMTP server supported by Python's `smtp` library
 - Binds messaging settings and credentials to project (maybe not the best thing? Still have to change them project-by-project, but they will be in a consistent location in each project)
 
@@ -26,7 +26,7 @@ supervisor provides a framework for scripts scheduled through Windows' Task Sche
 1. In your script's entry point code (usually `main.py`), before any arg parsing:
    - Instantiate a `Supervisor` object, passing in the name of your project
    - Call `.manage_exceptions()` on the `Supervisor` object to redirect exception handling
-1. Call `.send_report()` on the `Supervisor` object after your business logic:
+1. Call `.notify()` on the `Supervisor` object after your business logic:
    - In `main.py` (or wherever you instantiated the object), passing the message and path to the log file
    - —OR—
    - Elsewhere in your business logic, having passed your `Supervisor` object through your logic as needed.
