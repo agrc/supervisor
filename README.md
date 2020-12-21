@@ -7,7 +7,7 @@ A module for watching over scheduled processes: catching errors and sending mess
 
 ## Rationale
 
-supervisor provides a framework for scripts scheduled through Windows' Task Scheduler to send messages via the handlers in `messaging.py`. The messages can include gziped log files, progress reports, or execution summaries. The message handlers provide access to email, slack, and any other custom handler. These reporting methods are not supported by Task Scheduler. It also sends any uncaught exceptions via the registered message handlers.
+supervisor provides a framework for scripts scheduled through Windows' Task Scheduler to send messages via the handlers in `message_handlers.py`. The messages can include gziped log files, progress reports, or execution summaries. The message handlers provide access to email, slack, and any other custom handler. These reporting methods are not supported by Task Scheduler. It also sends any uncaught exceptions via the registered message handlers.
 
 - Redirects exception handling to a custom handler
 - Provides custom messaging handler to direct errors and any other end-of-script output to e-mail and (eventually) Slack
