@@ -7,7 +7,7 @@ A module for watching over scheduled processes: catching errors and sending mess
 
 ## Rationale
 
-supervisor provides a framework for scripts scheduled through Windows' Task Scheduler to report any errors and/or any logs via the handlers in `messaging.py`. Task Scheduler's built-in email tools require an email server running on the machine(?) and can't handle custom targets like Slack.
+supervisor provides a framework for scripts scheduled through Windows' Task Scheduler to report any errors and/or any logs via the handlers in `message_handlers.py`. Task Scheduler's built-in email tools require an email server running on the machine(?) and can't handle custom targets like Slack.
 
 - Redirects exception handling to a custom handler
 - Provides custom messaging handler to direct errors and any other end-of-script output to e-mail and (eventually) Slack
