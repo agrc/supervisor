@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 """
 setup.py
-A module that installs projectname as a module
+A module that installs supervsior as a module
 """
 from glob import glob
 from os.path import basename, splitext
@@ -13,7 +13,7 @@ setup(
     name='supervisor',
     version='1.0.0',
     license='MIT',
-    description='A watchdog module for scheduled scripts that catches and reports errors and/or logs.',
+    description='A watchdog module for scheduled scripts that sends notifications, including any uncaught exceptions.',
     author='Jake Adams, AGRC',
     author_email='jdadams@utah.gov',
     url='https://github.com/agrc/supervisor',
