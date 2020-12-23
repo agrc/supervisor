@@ -15,11 +15,8 @@ from smtplib import SMTP
 import pkg_resources
 import requests
 
-<<<<<<< HEAD
-=======
 from . import slack
 
->>>>>>> feat: first slack stuff
 
 class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
     """Base class for all message handlers.
