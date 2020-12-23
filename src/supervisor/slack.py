@@ -57,8 +57,10 @@ def _safely_access(report, prop):
 def lift_report_to_blocks(report):
     '''turns the forklift lift report object into slack blocks
     '''
+
     message = Message()
 
+    #: Header block
     message.add(SectionBlock(f':tractor:       :package: *Forklift Lift Report* :package:      :tractor:'))
 
     percent = _safely_access(report, 'num_success_pallets') / _safely_access(report, 'total_pallets') * 100
@@ -67,6 +69,7 @@ def lift_report_to_blocks(report):
     else:
         percent = f'{str(math.floor(percent))}% success'
 
+    #: Context block- date, host, percentage, etc
     message.add(
         ContextBlock([
             f'*{datetime.now().strftime("%B %d, %Y")}*',
@@ -79,6 +82,7 @@ def lift_report_to_blocks(report):
 
     message.add(DividerBlock())
 
+    #: Note any git errors
     if _safely_access(report, 'git_errors'):
         git_block = SectionBlock('git errors')
 
@@ -87,6 +91,7 @@ def lift_report_to_blocks(report):
 
         message.add(git_block)
 
+    #: Note any import errors
     if _safely_access(report, 'import_errors'):
         import_block = SectionBlock('python import errors')
 
@@ -95,6 +100,8 @@ def lift_report_to_blocks(report):
 
         message.add(import_block)
 
+    #: For each pallent, create a section block with the proper checkmarks, then a context block for date, then
+    #: a context block with text for each crate
     for pallet in _safely_access(report, 'pallets'):
         success = ':fire:'
 
@@ -388,6 +395,8 @@ class DividerBlock(Block):
 
 class Message:
     """A Slack message object that can be converted to a JSON string for use with the Slack message API.
+
+    A message is made up of Block objects, which contain the content of the post.
 
     Attributes
     ----------
