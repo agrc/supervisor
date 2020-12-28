@@ -4,6 +4,7 @@ This module holds the classes used by supervisor
 
 import logging
 import os
+import socket
 import sys
 import traceback
 
@@ -34,10 +35,9 @@ class Supervisor:
 
     def __init__(self, project_name, log_path=None):
 
-        #: Set up our list of MessageHandlers and add a default ConsoleHandler
+        #: Set up our list of MessageHandlers
         self.project_name = project_name
         self.message_handlers = []
-        self.message_handlers.append(ConsoleHandler())
         self.log_path = log_path
 
         #: Catch any uncaught exception with our custom exception handler
@@ -92,7 +92,7 @@ class Supervisor:
 
             message_details = MessageDetails()
             message_details.message = error
-            message_details.subject = f'{self.project_name}: ERROR'
+            message_details.subject = f'{self.project_name} on {socket.gethostname()}: ERROR'
             message_details.log_file = self.log_path
             self.notify(message_details)
 
