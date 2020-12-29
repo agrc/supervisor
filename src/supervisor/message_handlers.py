@@ -4,7 +4,7 @@ message_handlers.py: Holds all the different message handlers
 
 import gzip
 import io
-import logging
+import warnings
 from abc import ABC, abstractmethod
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -66,17 +66,15 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             have .log_file and .attachments
         """
 
-        log = logging.getLogger(message_details.project_name)
-
         #: Configure outgoing settings
-        from_address = self.email_settings['from_address']
-        to_addresses = self.email_settings['to_addresses']
-        smtp_server = self.email_settings['smtpServer']
-        smtp_port = self.email_settings['smtpPort']
+        try:
+            from_address = self.email_settings['from_address']
+            to_addresses = self.email_settings['to_addresses']
+            smtp_server = self.email_settings['smtpServer']
+            smtp_port = self.email_settings['smtpPort']
 
-        if None in [from_address, to_addresses, smtp_server, smtp_port]:
-            log.warning('Required environment variables for sending emails do not exist. No emails sent.')
-
+        except KeyError:
+            warnings.warn('Required environment variables for sending emails do not exist. No emails sent.')
             return
 
         message = self._build_message(message_details)
