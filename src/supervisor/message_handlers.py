@@ -128,7 +128,10 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             to_addresses_joined = to_addresses
 
         #: Add various elements of the message
-        message['Subject'] = subject
+        if 'prefix' in self.email_settings:
+            message['Subject'] = self.email_settings['prefix'] + subject
+        else:
+            message['Subject'] = subject
         message['From'] = self.email_settings['from_address']
         message['To'] = to_addresses_joined
 
