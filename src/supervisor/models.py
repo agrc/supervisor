@@ -2,13 +2,11 @@
 This module holds the classes used by supervisor
 """
 
-import logging
 import os
-import socket
 import sys
 import traceback
 
-from .message_handlers import ConsoleHandler, MessageHandler
+from .message_handlers import MessageHandler
 
 
 class Supervisor:
@@ -20,6 +18,8 @@ class Supervisor:
         The name of the parent project using Supervisor; used to get it's logfile
     message_handlers : [MessageHandler]
         Notifications will be sent via all handlers in this list
+    log : logging
+        logging object to use in global exception handler
     log_path : Path
         Path to the logfile
 
@@ -33,11 +33,12 @@ class Supervisor:
         Closure around a replacement for sys.excepthook
     """
 
-    def __init__(self, project_name, log_path=None):
+    def __init__(self, project_name, log=None, log_path=None):
 
         #: Set up our list of MessageHandlers
         self.project_name = project_name
         self.message_handlers = []
+        self.log = log
         self.log_path = log_path
 
         #: Catch any uncaught exception with our custom exception handler
@@ -65,8 +66,6 @@ class Supervisor:
         maintaining the signature required by sys.excepthook
         """
 
-        log = logging.getLogger(self.project_name)
-
         def global_exception_handler(exc_class, exc_object, tb):  # pylint: disable=invalid-name
             """Log any uncaught exceptions and send a notification via self.notify
 
@@ -82,17 +81,18 @@ class Supervisor:
             Used to handle any uncaught exceptions. Formats an error message, logs it, and sends an email.
             """
 
-            last_traceback = (traceback.extract_tb(tb))[-1]
-            line_number = last_traceback[1]
-            file_name = last_traceback[0].split('.')[0]
             error = os.linesep.join(traceback.format_exception(exc_class, exc_object, tb))
 
-            log.error(f'global error handler line: {line_number} ({file_name})')  # pylint: disable=logging-fstring-interpolation
-            log.error(error)
+            if self.log:
+                last_traceback = (traceback.extract_tb(tb))[-1]
+                line_number = last_traceback[1]
+                file_name = last_traceback[0].split('.')[0]
+                self.log.error(f'global error handler line: {line_number} ({file_name})')  # pylint: disable=logging-fstring-interpolation
+                self.log.error(error)
 
             message_details = MessageDetails()
             message_details.message = error
-            message_details.subject = f'{self.project_name} on {socket.gethostname()}: ERROR'
+            message_details.subject = 'ERROR'
             message_details.log_file = self.log_path
             self.notify(message_details)
 

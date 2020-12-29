@@ -9,8 +9,6 @@ def test_supervisor_constructor_does_proper_setup(mocker):
 
     sim_sup = models.Supervisor('test project')
 
-    assert len(sim_sup.message_handlers) == 1
-    assert type(sim_sup.message_handlers[0]) == message_handlers.ConsoleHandler
     assert exceptions_mock.called_once()
 
 
@@ -53,5 +51,5 @@ def test_add_message_handler(mocker):
 
     sim_sup.add_message_handler(handler_mock)
 
-    assert len(sim_sup.message_handlers) == 2
+    assert len(sim_sup.message_handlers) == 1
     assert sim_sup.message_handlers[-1] == handler_mock
