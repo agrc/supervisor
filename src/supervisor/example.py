@@ -6,6 +6,7 @@ An example implementation using Supervisor to catch an error and email both the 
 
 import logging
 import logging.handlers
+import socket
 from pathlib import Path
 
 from supervisor.message_handlers import EmailHandler
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     test_logger.info('test run')
 
     #: Instantiate a Supervisor object
-    sim_sup = Supervisor('supervisor', test_path)
+    sim_sup = Supervisor('supervisor', log=test_logger, log_path=test_path)
 
     #: Specify the email server and addresses
     email_settings = {
@@ -34,6 +35,7 @@ if __name__ == '__main__':
         'smtpPort': 25,
         'from_address': 'noreply@utah.gov',
         'to_addresses': 'jdadams@utah.gov',
+        'prefix': f'Example on {socket.gethostname()}: '
     }
 
     #: Instantiate a new EmailHandler and register it with our Supervisor
