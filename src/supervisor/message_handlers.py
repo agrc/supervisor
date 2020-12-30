@@ -74,12 +74,12 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             smtp_port = self.email_settings['smtpPort']
 
         except KeyError:
-            warnings.warn('Required environment variables for sending emails do not exist. No emails sent.')
+            warnings.warn('Required email settings do not exist. No emails sent.')
             return
 
         for setting in [from_address, to_addresses, smtp_server, smtp_port]:
             if not setting:
-                warnings.warn('Required environment variables for sending emails exist but not set. No emails sent.')
+                warnings.warn('Required email settings exist but aren\'t populated. No emails sent.')
                 return
 
         message = self._build_message(message_details)
