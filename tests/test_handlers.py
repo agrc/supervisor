@@ -1,3 +1,5 @@
+import pytest
+
 from supervisor import message_handlers
 from supervisor.models import MessageDetails
 
@@ -168,3 +170,150 @@ def test_gzipper(mocker, tmp_path):
     assert attachment.get_content_type() == 'application/x-gzip'
     assert attachment.get_content_disposition() == 'attachment'
     assert attachment.get_payload()
+
+    # email_settings = {
+    #     'smtpServer': 'foo.example',
+    #     'smtpPort': 25,
+    #     'from_address': 'foo@bar',
+    #     'to_addresses': 'baz@bar',
+    # }
+
+
+def test_send_message_catches_missing_server(mocker):
+
+    builder_mock = mocker.patch('supervisor.message_handlers.EmailHandler._build_message')
+    email_settings = {
+        'smtpPort': 25,
+        'from_address': 'foo@bar',
+        'to_addresses': 'baz@bar',
+    }
+    details = mocker.Mock()
+
+    with pytest.warns(UserWarning):
+        email_handler = message_handlers.EmailHandler(email_settings)
+        email_handler.send_message(details)
+
+    builder_mock.assert_not_called()
+
+
+def test_send_message_catches_missing_port(mocker):
+
+    builder_mock = mocker.patch('supervisor.message_handlers.EmailHandler._build_message')
+    email_settings = {
+        'smtpServer': 'foo.example',
+        'from_address': 'foo@bar',
+        'to_addresses': 'baz@bar',
+    }
+    details = mocker.Mock()
+
+    with pytest.warns(UserWarning):
+        email_handler = message_handlers.EmailHandler(email_settings)
+        email_handler.send_message(details)
+
+    builder_mock.assert_not_called()
+
+
+def test_send_message_catches_missing_from_address(mocker):
+
+    builder_mock = mocker.patch('supervisor.message_handlers.EmailHandler._build_message')
+    email_settings = {
+        'smtpServer': 'foo.example',
+        'smtpPort': 25,
+        'to_addresses': 'baz@bar',
+    }
+    details = mocker.Mock()
+
+    with pytest.warns(UserWarning):
+        email_handler = message_handlers.EmailHandler(email_settings)
+        email_handler.send_message(details)
+
+    builder_mock.assert_not_called()
+
+
+def test_send_message_catches_missing_to_address(mocker):
+
+    builder_mock = mocker.patch('supervisor.message_handlers.EmailHandler._build_message')
+    email_settings = {
+        'smtpServer': 'foo.example',
+        'smtpPort': 25,
+        'from_address': 'foo@bar',
+    }
+    details = mocker.Mock()
+
+    with pytest.warns(UserWarning):
+        email_handler = message_handlers.EmailHandler(email_settings)
+        email_handler.send_message(details)
+
+    builder_mock.assert_not_called()
+
+
+def test_send_message_catches_blank_server(mocker):
+
+    builder_mock = mocker.patch('supervisor.message_handlers.EmailHandler._build_message')
+    email_settings = {
+        'smtpServer': '',
+        'smtpPort': 25,
+        'from_address': 'foo@bar',
+        'to_addresses': 'baz@bar',
+    }
+    details = mocker.Mock()
+
+    with pytest.warns(UserWarning):
+        email_handler = message_handlers.EmailHandler(email_settings)
+        email_handler.send_message(details)
+
+    builder_mock.assert_not_called()
+
+
+def test_send_message_catches_blank_port(mocker):
+
+    builder_mock = mocker.patch('supervisor.message_handlers.EmailHandler._build_message')
+    email_settings = {
+        'smtpServer': 'foo.example',
+        'smtpPort': None,
+        'from_address': 'foo@bar',
+        'to_addresses': 'baz@bar',
+    }
+    details = mocker.Mock()
+
+    with pytest.warns(UserWarning):
+        email_handler = message_handlers.EmailHandler(email_settings)
+        email_handler.send_message(details)
+
+    builder_mock.assert_not_called()
+
+
+def test_send_message_catches_blank_from_address(mocker):
+
+    builder_mock = mocker.patch('supervisor.message_handlers.EmailHandler._build_message')
+    email_settings = {
+        'smtpServer': 'foo.example',
+        'smtpPort': 25,
+        'from_address': '',
+        'to_addresses': 'baz@bar',
+    }
+    details = mocker.Mock()
+
+    with pytest.warns(UserWarning):
+        email_handler = message_handlers.EmailHandler(email_settings)
+        email_handler.send_message(details)
+
+    builder_mock.assert_not_called()
+
+
+def test_send_message_catches_blank_to_address(mocker):
+
+    builder_mock = mocker.patch('supervisor.message_handlers.EmailHandler._build_message')
+    email_settings = {
+        'smtpServer': 'foo.example',
+        'smtpPort': 25,
+        'from_address': 'foo@bar',
+        'to_addresses': '',
+    }
+    details = mocker.Mock()
+
+    with pytest.warns(UserWarning):
+        email_handler = message_handlers.EmailHandler(email_settings)
+        email_handler.send_message(details)
+
+    builder_mock.assert_not_called()
