@@ -122,7 +122,7 @@ def test_gzip_not_called_for_non_existant_attachments(mocker, tmp_path):
     assert not handler_mock._build_gzip_attachment.called
 
 
-def test_gzip_called_4_times_for_3_attachments_and_log(mocker, tmp_path):
+def test_gzip_called_3_times_for_3_attachments(mocker, tmp_path):
 
     distribution_Mock = mocker.Mock()
     distribution_Mock.version = 0
@@ -136,16 +136,11 @@ def test_gzip_called_4_times_for_3_attachments_and_log(mocker, tmp_path):
             attfile.write(f'att{i}')
         atts.append(path)
 
-    log_path = tmp_path / 'log'
-    with open(log_path, 'w') as logfile:
-        logfile.write('log')
-
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
     message_details.project_name = 'testing'
     message_details.attachments.extend(atts)
-    message_details.log_file = log_path
 
     handler_mock = mocker.Mock()
     handler_mock.email_settings = {
@@ -155,7 +150,7 @@ def test_gzip_called_4_times_for_3_attachments_and_log(mocker, tmp_path):
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
-    assert handler_mock._build_gzip_attachment.call_count == 4
+    assert handler_mock._build_gzip_attachment.call_count == 3
 
 
 def test_gzipper(mocker, tmp_path):

@@ -93,7 +93,7 @@ class Supervisor:
             message_details = MessageDetails()
             message_details.message = error
             message_details.subject = 'ERROR'
-            message_details.log_file = self.log_path
+            message_details.attachments = [self.log_path]
             message_details.project_name = self.project_name
             self.notify(message_details)
 
@@ -108,9 +108,7 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
     message : str
         The text of the message
     attachment : list
-        Strings or Paths to any attachments
-    log_file : Path
-        Path to an on-disk log file
+        Strings or Paths to any attachments, including log files
     subject : str
         The message subject
     project_name : str
@@ -122,6 +120,5 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
     def __init__(self):
         self.message = ''
         self.attachments = []  #: Strings or Paths
-        self.log_file = None  #: Path
         self.subject = ''
         self.project_name = ''

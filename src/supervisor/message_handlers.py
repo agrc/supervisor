@@ -97,25 +97,15 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             A formatted message that can be passed to smtp.sendmail as message.as_string()
         """
 
-        subject = message_details.subject
-        project_name = message_details.project_name
-
-        #: Build attachments list
-        attachments = []
-        if message_details.log_file:
-            attachments.append(message_details.log_file)
-        if message_details.attachments:
-            attachments.extend(message_details.attachments)
-
         #: Use body as message if it's already a MIMEMultipart, otherwise create a new MIMEMultipart as the message
         message = MIMEMultipart()
         message.attach(MIMEText(message_details.message, 'html'))
 
         #: Get the client's version (assuming client has been installed via pip install and setup.py)
-        distributions = pkg_resources.require(project_name)
+        distributions = pkg_resources.require(message_details.project_name)
         if distributions:
             version = distributions[0].version
-            version = MIMEText(f'<p>{project_name} version: {version}</p>', 'html')
+            version = MIMEText(f'<p>{message_details.project_name} version: {version}</p>', 'html')
             message.attach(version)
 
         #: Split recipient addresses if needed.
@@ -127,14 +117,14 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         #: Add various elements of the message
         if 'prefix' in self.email_settings:
-            message['Subject'] = self.email_settings['prefix'] + subject
+            message['Subject'] = self.email_settings['prefix'] + message_details.subject
         else:
-            message['Subject'] = subject
+            message['Subject'] = message_details.subject
         message['From'] = self.email_settings['from_address']
         message['To'] = to_addresses_joined
 
-        #: gzip all attachments (logs) and add to message
-        for original_path in attachments:
+        #: gzip all attachments and add to message
+        for original_path in message_details.attachments:
             path = Path(original_path)  #: convert to a Path if it isn't already
             if path.is_file():
                 message.attach(self._build_gzip_attachment(path))
