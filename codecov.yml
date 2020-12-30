@@ -1,0 +1,3 @@
+ignore:
+  - "test_*.py"
+  - "src/supervisor/example.py"
