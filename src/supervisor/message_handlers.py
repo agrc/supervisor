@@ -111,7 +111,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         message = MIMEMultipart()
         message.attach(MIMEText(message_details.message, 'html'))
 
-        #: TODO: Not sure how often this is coming comming thorugh, may need more work.
+        #: Get the client's version (assuming client has been installed via pip install and setup.py)
         distributions = pkg_resources.require(project_name)
         if distributions:
             version = distributions[0].version

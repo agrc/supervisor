@@ -27,7 +27,7 @@ if __name__ == '__main__':
     test_logger.info('test run')
 
     #: Instantiate a Supervisor object
-    sim_sup = Supervisor('supervisor', log=test_logger, log_path=test_path)
+    sim_sup = Supervisor('supervisor', logger=test_logger, log_path=test_path)
 
     #: Specify the email server and addresses
     email_settings = {
