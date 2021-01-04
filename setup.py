@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='supervisor',
-    version='1.0.0',
+    version='1.1.0',
     license='MIT',
     description='A watchdog module for scheduled scripts that sends notifications, including any uncaught exceptions.',
     author='Jake Adams, AGRC',
