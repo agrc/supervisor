@@ -19,10 +19,8 @@ supervisor provides a framework for scripts scheduled through Windows' Task Sche
 1. Set up your working environment
    - `conda activate PROJECT_NAME`
    - `cd c:\root\path\where\you\store\your\code` (ie, `cd c:\gis\git`)
-1. Clone the repo and install
-   - `git clone https://github.com/agrc/supervisor`
-   - `cd supervisor`
-   - `pip install -e .`
+1. Install supervisor (or add to your project's `setup.py`)
+   - `pip install agrc-supervisor`
 1. In your script's entry point code (usually `main.py`), before any arg parsing:
    - Instantiate a `Supervisor` object, passing in the name of your project
 1. Call `.notify()` on the `Supervisor` object after your business logic:
