@@ -8,31 +8,15 @@ The Supervisor is the main object used to coordinate messaging and error handlin
 
 ### Attributes
 
-**project_name** : str
-
-- The name of the client project using Supervisor; used to report version in global exception handler messages
-
-**message_handlers** : list of MessageHandler objects
-
-- Notifications will be sent via all handlers in this list
-
-**logger** : Logger
-
-- Logger object to use in global exception handler
-
-**log_path** : Path
-
-- Path to the logfile
+- `project_name` (str): The name of the client project using Supervisor; used to report version in global exception handler messages
+- `message_handlers` (List): Notifications will be sent via all handlers in this list
+- `logger` (Logger): Logger object to use in global exception handler
+- `log_path` (Path): Path to a logfile to send in exception messages
 
 ### Methods
 
-**add_message_handler(handler)**
-
-- Register a new handler for sending messages
-
-**notify(message)**
-
-- Send a notification to all registered handlers
+- `add_message_handler(handler)`: Register a new handler for sending messages
+- `notify(message)`: Send a notification to all registered handlers
 
 ### Usage
 
@@ -58,21 +42,10 @@ MessageDetails is a simple data structure for holding information about your mes
 
 ### Attributes
 
-**message** : str
-
-- The text of the message
-
-**attachment** : list
-
-- Strings or Paths to any attachments, including log files
-
-**subject** : str
-
-- The message subject
-
-**project_name** : str
-
-- The name of the project that has added the Supervisor object. Used for adding the version to notifications.
+- `message` (str): The text of the message
+- `attachment` (List): Strings or Paths to any attachments, including log files
+- `subject` (str): The message subject
+- `project_name` (str): The name of the project that has added the Supervisor object. Used for adding the version to notifications.
 
 ### Usage
 

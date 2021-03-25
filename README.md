@@ -16,6 +16,8 @@ supervisor provides a framework for scripts scheduled through Windows' Task Sche
 
 ## Usage
 
+See `api.md` for an in-depth description of Supervisor and how it's used.
+
 1. Set up your working environment
    - `conda activate PROJECT_NAME`
    - `cd c:\root\path\where\you\store\your\code` (ie, `cd c:\gis\git`)
