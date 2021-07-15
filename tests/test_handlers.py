@@ -180,7 +180,7 @@ def test_gzip_not_called_for_non_existant_attachments(mocker, tmp_path):
     assert not handler_mock._build_gzip_attachment.called
 
 
-def test_gzip_not_called_for_non_empty_str_attachment_path(mocker):
+def test_gzip_not_called_for_empty_str_attachment_path(mocker):
 
     distribution_Mock = mocker.Mock()
     distribution_Mock.version = 0
