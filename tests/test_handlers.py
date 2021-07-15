@@ -71,6 +71,34 @@ def test_build_message_with_None_attachment(mocker):
     assert test_message.get_payload()[1].get_payload() == '<p>testing version: 0</p>'
 
 
+def test_build_message_with_empty_str_attachment_path(mocker):
+
+    distribution_Mock = mocker.Mock()
+    distribution_Mock.version = 0
+    distributions = [distribution_Mock]
+    mocker.patch('pkg_resources.require', return_value=distributions)
+
+    message_details = MessageDetails()
+    message_details.message = 'test_message'
+    message_details.subject = 'test_subject'
+    message_details.project_name = 'testing'
+    message_details.attachments = ['']
+
+    handler_mock = mocker.Mock()
+    handler_mock.email_settings = {
+        'to_addresses': 'foo@example.com',
+        'from_address': 'testing@example.com',
+    }
+
+    test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
+
+    assert test_message.get('Subject') == 'test_subject'
+    assert test_message.get('To') == 'foo@example.com'
+    assert test_message.get('From') == 'testing@example.com'
+    assert test_message.get_payload()[0].get_payload() == 'test_message'
+    assert test_message.get_payload()[1].get_payload() == '<p>testing version: 0</p>'
+
+
 def test_build_message_with_subject_prefix(mocker):
 
     distribution_Mock = mocker.Mock()
@@ -140,6 +168,30 @@ def test_gzip_not_called_for_non_existant_attachments(mocker, tmp_path):
     message_details.attachments = [
         tmp_path / 'att1',
     ]
+
+    handler_mock = mocker.Mock()
+    handler_mock.email_settings = {
+        'to_addresses': 'foo@example.com',
+        'from_address': 'testing@example.com',
+    }
+
+    test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
+
+    assert not handler_mock._build_gzip_attachment.called
+
+
+def test_gzip_not_called_for_non_empty_str_attachment_path(mocker):
+
+    distribution_Mock = mocker.Mock()
+    distribution_Mock.version = 0
+    distributions = [distribution_Mock]
+    mocker.patch('pkg_resources.require', return_value=distributions)
+
+    message_details = MessageDetails()
+    message_details.message = 'test_message'
+    message_details.subject = 'test_subject'
+    message_details.project_name = 'testing'
+    message_details.attachments = ['']
 
     handler_mock = mocker.Mock()
     handler_mock.email_settings = {

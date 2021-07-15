@@ -130,10 +130,12 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         #: gzip all attachments and add to message
         for original_path in message_details.attachments:
-            if original_path:  #: Path() doesn't like None
-                path = Path(original_path)  #: convert to a Path if it isn't already
-                if path.is_file():
-                    message.attach(self._build_gzip_attachment(path))
+            if not original_path:  #: Path() doesn't like None and empty string resolves to current dir
+                continue
+
+            path = Path(original_path)  #: convert to a Path if it isn't already
+            if path.is_file():
+                message.attach(self._build_gzip_attachment(path))
 
         return message
 
