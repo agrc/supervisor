@@ -39,3 +39,12 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
 1. Install in development mode
    - `cd supervisor`
    - `pip install -e ".[tests]"`
+
+## Update pypi
+
+1. Delete everything in `dist/`
+1. Make sure you've updated the version number in `setup.py`
+1. Recreate the wheels:
+   - `python setup.py sdist bdist_wheel`
+1. Re-upload the new files
+   - `twine upload dist/*`
