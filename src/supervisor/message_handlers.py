@@ -13,6 +13,8 @@ from pathlib import Path
 from smtplib import SMTP
 
 import pkg_resources
+import sendgrid
+from sendgrid.helpers.mail import Attachment, Content, Email, Mail, To
 
 
 class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
@@ -161,6 +163,24 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             attachment.add_header('Content-Disposition', f'attachment; filename="{attachment_filename}"')
 
             return attachment
+
+
+class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
+
+    def __init__(self, sendgrid_settings):
+        self.sendgrid_settings = sendgrid_settings
+
+    def send_message(self, message_details):
+        pass
+
+    def _build_message(self, message_details):
+        pass
+
+    def _build_attachements(self, files):
+        pass
+
+    def _zip_files(self, files):
+        pass
 
 
 class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
