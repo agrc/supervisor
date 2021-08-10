@@ -207,7 +207,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return from_address, to_addresses
 
-    def _build_recipient_addresses(self, to_addresses):
+    def _build_recipient_addresses(self, to_addresses):  #pylint: disable=no-self-use
         #: If we just get a string just return that one
         if isinstance(to_addresses, str):
             return [To(to_addresses)]
@@ -225,7 +225,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return subject
 
-    def _build_content(self, message_details):
+    def _build_content(self, message_details):  #pylint: disable=no-self-use
         message = message_details.message
 
         #: Get the client's version (assuming client has been installed via pip install and setup.py)
