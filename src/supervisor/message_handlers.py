@@ -182,7 +182,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
     def __init__(self, sendgrid_settings):
         self.sendgrid_settings = sendgrid_settings
-        self.sendgrid_client = sendgrid.SendGridAPIClient(api_key=self.sendgrid_settings['SENDGRID_API_KEY'])
+        self.sendgrid_client = sendgrid.SendGridAPIClient(api_key=self.sendgrid_settings['api_key'])
 
     def send_message(self, message_details):
         """Construct and send an email message with the SendGrid API

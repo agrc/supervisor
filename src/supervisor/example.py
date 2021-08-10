@@ -9,7 +9,8 @@ import logging.handlers
 import socket
 from pathlib import Path
 
-from supervisor.message_handlers import EmailHandler
+from supervisor import secrets
+from supervisor.message_handlers import EmailHandler, SendGridHandler
 from supervisor.models import Supervisor
 
 if __name__ == '__main__':
@@ -29,17 +30,36 @@ if __name__ == '__main__':
     #: Instantiate a Supervisor object
     sim_sup = Supervisor('supervisor', logger=test_logger, log_path=test_path)
 
-    #: Specify the email server and addresses
-    email_settings = {
-        'smtpServer': 'send.state.ut.us',
-        'smtpPort': 25,
+    #: ============
+    #: EmailHandler
+    #: ============
+
+    # #: Specify the email server and addresses
+    # email_settings = {
+    #     'smtpServer': 'send.state.ut.us',
+    #     'smtpPort': 25,
+    #     'from_address': 'noreply@utah.gov',
+    #     'to_addresses': 'jdadams@utah.gov',
+    #     'prefix': f'Example on {socket.gethostname()}: '
+    # }
+
+    # #: Instantiate a new EmailHandler and register it with our Supervisor
+    # sim_sup.add_message_handler(EmailHandler(email_settings))
+
+    #: ===============
+    #: SendGridHandler
+    #: ===============
+
+    #: Specify the to/from addresses, subject prefix, and sendgrid API key
+    sendgrid_settings = {
         'from_address': 'noreply@utah.gov',
         'to_addresses': 'jdadams@utah.gov',
-        'prefix': f'Example on {socket.gethostname()}: '
+        'prefix': f'Example on {socket.gethostname()}: ',
+        'api_key': secrets.SENDGRID_API_KEY,
     }
 
-    #: Instantiate a new EmailHandler and register it with our Supervisor
-    sim_sup.add_message_handler(EmailHandler(email_settings))
+    #: Instantiate a new SendGridHandler and register it with our Supervisor
+    sim_sup.add_message_handler(SendGridHandler(sendgrid_settings))
 
     #: Trigger Supervisor's error handler
     raise ValueError('random error here')

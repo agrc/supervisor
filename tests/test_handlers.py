@@ -512,7 +512,7 @@ class TestSandGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@bar.com',
             'to_addresses': '',
-            'SENDGRID_API_KEY': 'itsasecret',
+            'api_key': 'itsasecret',
         }
         recipient_mock = mocker.patch.object(message_handlers.SendGridHandler, '_build_recipient_addresses')
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
@@ -528,7 +528,7 @@ class TestSandGridHandlerWhole:
         sendgrid_settings = {
             'from_address': '',
             'to_addresses': 'foo@bar.com',
-            'SENDGRID_API_KEY': 'itsasecret',
+            'api_key': 'itsasecret',
         }
         recipient_mock = mocker.patch.object(message_handlers.SendGridHandler, '_build_recipient_addresses')
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
@@ -551,7 +551,7 @@ class TestSandGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'SENDGRID_API_KEY': 'itsasecret',
+            'api_key': 'itsasecret',
         }
 
         message_details = models.MessageDetails()
