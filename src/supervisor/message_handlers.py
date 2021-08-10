@@ -174,13 +174,13 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     def send_message(self, message_details):
 
         from_address, to_addresses = self._verify_addresses()
+        #: Bail out instead of raising error instead of forcing client to deal with it
+        #: Warnings should have been raised from _verify_addresses() and Nones returned.
+        if not from_address or not to_addresses:
+            return
+
         sender_address = Email(from_address)
         recipient_addresses = self._build_recipient_addresses(to_addresses)
-
-        for address in [sender_address, recipient_addresses]:
-            if not address:
-                warnings.warn('To/From address settings exist but are empty. No emails sent.')
-                return
 
         subject = self._build_subject(message_details)
         content = self._build_content(message_details)
@@ -192,13 +192,17 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         #: Maybe test the response via response.status_code?
 
     def _verify_addresses(self):
-        #: Configure outgoing settings
+
         try:
             from_address = self.sendgrid_settings['from_address']
             to_addresses = self.sendgrid_settings['to_addresses']
 
         except KeyError:
             warnings.warn('To/From address settings do not exist. No emails sent.')
+            return None, None
+
+        if not from_address or not to_addresses:
+            warnings.warn('To/From address settings exist but are empty. No emails sent.')
             return None, None
 
         return from_address, to_addresses
