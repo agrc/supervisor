@@ -169,14 +169,68 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
     def __init__(self, sendgrid_settings):
         self.sendgrid_settings = sendgrid_settings
+        self.sendgrid_client = sendgrid.SendGridAPIClient(api_key=self.sendgrid_settings['SENDGRID_API_KEY'])
 
     def send_message(self, message_details):
-        pass
 
-    def _build_message(self, message_details):
-        pass
+        from_address, to_addresses = self._verify_addresses()
+        sender_address = Email(from_address)
+        recipient_addresses = self._build_recipient_addresses(to_addresses)
 
-    def _build_attachements(self, files):
+        for address in [sender_address, recipient_addresses]:
+            if not address:
+                warnings.warn('To/From address settings exist but are empty. No emails sent.')
+                return
+
+        subject = self._build_subject(message_details)
+        content = self._build_content(message_details)
+
+        #: Build message object and send it
+        mail = Mail(sender_address, recipient_addresses, subject, content)
+        response = self.sendgrid_client.client.mail.send.post(request_body=mail.get())
+
+        #: Maybe test the response via response.status_code?
+
+    def _verify_addresses(self):
+        #: Configure outgoing settings
+        try:
+            from_address = self.sendgrid_settings['from_address']
+            to_addresses = self.sendgrid_settings['to_addresses']
+
+        except KeyError:
+            warnings.warn('To/From address settings do not exist. No emails sent.')
+            return None, None
+
+        return from_address, to_addresses
+
+    def _build_recipient_addresses(self, to_addresses):
+        #: Build list of to addresses
+        recipient_addresses = []
+        for address in to_addresses:
+            recipient_addresses.append(To(address))
+        return recipient_addresses
+
+    def _build_subject(self, message_details):
+        #: Configure subject
+        subject = message_details.subject
+        if 'prefix' in self.sendgrid_settings:
+            subject = self.sendgrid_settings['prefix'] + subject
+
+        return subject
+
+    def _build_content(self, message_details):
+        message = message_details.message
+
+        #: Get the client's version (assuming client has been installed via pip install and setup.py)
+        distributions = pkg_resources.require(message_details.project_name)
+        if distributions:
+            version = distributions[0].version
+            version = f'\n\n{message_details.project_name} version: {version}'
+            message += version
+
+        return Content('text/plain', message)
+
+    def _build_attachments(self, files):
         pass
 
     def _zip_files(self, files):

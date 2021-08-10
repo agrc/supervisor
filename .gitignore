@@ -32,3 +32,4 @@ cov.xml
 .coverage
 
 src/supervisor/secrets.py
+.vscode/.ropeproject/config.py
