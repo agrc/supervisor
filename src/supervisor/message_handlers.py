@@ -204,7 +204,10 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return from_address, to_addresses
 
     def _build_recipient_addresses(self, to_addresses):
-        #: Build list of to addresses
+        #: If we just get a string just return that one
+        if isinstance(to_addresses, str):
+            return [To(to_addresses)]
+
         recipient_addresses = []
         for address in to_addresses:
             recipient_addresses.append(To(address))
