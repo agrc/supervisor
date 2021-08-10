@@ -166,12 +166,31 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
 
 class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
+    """Send emails via the SendGrid service.
+
+    Attributes
+    ----------
+    sendgrid_settings : dict
+        'from_address' (str)
+        'to_addresses' (str or List): single string or list of strings
+
+    Methods
+    -------
+    send_message(message_details)
+        Build a message and send using the SendGrid API's helper classes
+    """
 
     def __init__(self, sendgrid_settings):
         self.sendgrid_settings = sendgrid_settings
         self.sendgrid_client = sendgrid.SendGridAPIClient(api_key=self.sendgrid_settings['SENDGRID_API_KEY'])
 
     def send_message(self, message_details):
+        """Construct and send an email message with the SendGrid API
+
+        Args:
+            message_details : MessageDetails
+                Must have .message, .subject, .project_name; may have .log_file and .attachments
+        """
 
         from_address, to_addresses = self._verify_addresses()
         #: Bail out instead of raising error instead of forcing client to deal with it
@@ -192,6 +211,11 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         #: Maybe test the response via response.status_code?
 
     def _verify_addresses(self):
+        """Make sure from/to address keys exist and are not empty
+
+        Returns:
+            tuple (str): from and to addresses
+        """
 
         try:
             from_address = self.sendgrid_settings['from_address']
@@ -208,6 +232,15 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return from_address, to_addresses
 
     def _build_recipient_addresses(self, to_addresses):  #pylint: disable=no-self-use
+        """Craft 'to' addresses into a list of SendGrid 'To' objects
+
+        Args:
+            to_addresses (str or List): 'to' addresses, either as a single string or list of strings
+
+        Returns:
+            list (To): 'To' objects for future Mail() object
+        """
+
         #: If we just get a string just return that one
         if isinstance(to_addresses, str):
             return [To(to_addresses)]
@@ -218,7 +251,15 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return recipient_addresses
 
     def _build_subject(self, message_details):
-        #: Configure subject
+        """Add prefix to subject if needed
+
+        Args:
+            message_details (MessageDetails): Will use .prefix if present
+
+        Returns:
+            str: Subject for outgoing email
+        """
+
         subject = message_details.subject
         if 'prefix' in self.sendgrid_settings:
             subject = self.sendgrid_settings['prefix'] + subject
@@ -226,6 +267,14 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return subject
 
     def _build_content(self, message_details):  #pylint: disable=no-self-use
+        """Add client version if desired and package into plaintext Content object
+
+        Args:
+            message_details (MessageDetails): Uses .project_name to get client version
+
+        Returns:
+            Content: Content of email as a SendGrid Content object
+        """
         message = message_details.message
 
         #: Get the client's version (assuming client has been installed via pip install and setup.py)
