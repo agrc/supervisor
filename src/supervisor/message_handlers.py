@@ -6,15 +6,19 @@ import gzip
 import io
 import warnings
 from abc import ABC, abstractmethod
+from base64 import b64encode
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
+from shutil import make_archive
 from smtplib import SMTP
+from tempfile import TemporaryDirectory
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pkg_resources
 import sendgrid
-from sendgrid.helpers.mail import Attachment, Content, Email, Mail, To
+from sendgrid.helpers.mail import Attachment, Content, Email, FileContent, FileName, FileType, Mail, To
 
 
 class MessageHandler(ABC):  # pylint: disable=too-few-public-methods
@@ -65,7 +69,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         ----------
         mesage_details : MessageDetails
             Passed through to _build_message. Must have .message, .subject, .project_name; may
-            have .log_file and .attachments
+            have .attachments
         """
 
         #: Configure outgoing settings
@@ -96,7 +100,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Parameters
         ----------
         mesage_details : MessageDetails
-            Must have .message, .subject, .project_name; may have .log_file and .attachments
+            Must have .message, .subject, .project_name; may have .attachments
 
         Returns
         -------
@@ -189,7 +193,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         Args:
             message_details : MessageDetails
-                Must have .message, .subject, .project_name; may have .log_file and .attachments
+                Must have .message, .subject, .project_name; may have .attachments
         """
 
         from_address, to_addresses = self._verify_addresses()
@@ -203,6 +207,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         subject = self._build_subject(message_details)
         content = self._build_content(message_details)
+        attachments = self._process_attachments(message_details.attachments)
 
         #: Build message object and send it
         mail = Mail(sender_address, recipient_addresses, subject, content)
@@ -286,11 +291,48 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return Content('text/plain', message)
 
-    def _build_attachments(self, files):
-        pass
+    def _process_attachments(self, attachments):
 
-    def _zip_files(self, files):
-        pass
+        attachment_objects = []
+        working_dir = TemporaryDirectory().name
+
+        for attachment in attachments:
+            if Path(attachment).is_dir():
+                zip_path = self._zip_whole_directory(working_dir, attachment)
+            else:
+                zip_path = self._zip_single_file(working_dir, attachment)
+            attachment_objects.append(self._build_attachment(zip_path))
+
+        return attachment_objects
+
+    def _zip_whole_directory(self, working_dir, dir_to_be_zipped):
+
+        #: Zip a whole directory to the tempdir, return its path
+        attachment_dir = Path(dir_to_be_zipped)
+        zip_base_name = Path(working_dir, attachment_dir.name)
+        zip_out_path = make_archive(zip_base_name, 'zip', root_dir=attachment_dir.parent, base_dir=attachment_dir.name)
+        return zip_out_path
+
+    def _zip_single_file(self, working_dir, attachment):
+
+        #: Zip a single file to the tempdir, return its path
+        attachment_path = Path(attachment)
+        zip_out_path = Path(working_dir, attachment_path.stem).with_suffix('zip')
+        with ZipFile(zip_out_path, 'x', compression=ZIP_DEFLATED) as new_zip:
+            new_zip.write(attachment_path, zip_out_path.name)
+        return zip_out_path
+
+    def _build_attachment(self, zip_path):
+
+        #: Build a SendGrid Attachment object with various fields
+        with open(zip_path, 'rb') as zip_file:
+            data = zip_file.read()
+        encoded = b64encode(data).decode()
+        attachment = Attachment()
+        attachment.file_content = FileContent(encoded)
+        attachment.file_type = FileType('application/zip')
+        attachment.file_name = FileName(Path(zip_path).name)
+        return attachment
 
 
 class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
