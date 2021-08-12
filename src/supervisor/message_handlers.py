@@ -211,6 +211,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         #: Build message object and send it
         mail = Mail(sender_address, recipient_addresses, subject, content)
+        mail.attachment = attachments
         response = self.sendgrid_client.client.mail.send.post(request_body=mail.get())
 
         #: Maybe test the response via response.status_code?
@@ -294,14 +295,16 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     def _process_attachments(self, attachments):
 
         attachment_objects = []
-        working_dir = TemporaryDirectory().name
 
-        for attachment in attachments:
-            if Path(attachment).is_dir():
-                zip_path = self._zip_whole_directory(working_dir, attachment)
-            else:
-                zip_path = self._zip_single_file(working_dir, attachment)
-            attachment_objects.append(self._build_attachment(zip_path))
+        #: Note: if we use this context manager, zip files in working_dir don't persist for testing purposes.
+        with TemporaryDirectory() as working_dir:
+
+            for attachment in attachments:
+                if Path(attachment).is_dir():
+                    zip_path = self._zip_whole_directory(working_dir, attachment)
+                else:
+                    zip_path = self._zip_single_file(working_dir, attachment)
+                attachment_objects.append(self._build_attachment(zip_path))
 
         return attachment_objects
 
@@ -317,9 +320,9 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         #: Zip a single file to the tempdir, return its path
         attachment_path = Path(attachment)
-        zip_out_path = Path(working_dir, attachment_path.stem).with_suffix('zip')
+        zip_out_path = Path(working_dir, attachment_path.stem).with_suffix('.zip')
         with ZipFile(zip_out_path, 'x', compression=ZIP_DEFLATED) as new_zip:
-            new_zip.write(attachment_path, zip_out_path.name)
+            new_zip.write(attachment_path, attachment_path.name)
         return zip_out_path
 
     def _build_attachment(self, zip_path):
