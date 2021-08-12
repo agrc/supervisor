@@ -1,6 +1,7 @@
 import base64
 import zipfile
 from base64 import b64encode
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import mock
 
@@ -833,11 +834,10 @@ class TestSendGridHandlerAttachments:
 
         attachments = sendgrid_handler._process_attachments([dir_to_be_zipped, single_file_to_be_zipped])
 
-        #: If we use TemporaryDirectory() as a context manager in _process_attachments, the zip files
-        #: no longer exist for these asserts to check.
         assert len(attachments) == 2
-        assert zipfile.ZipFile(attachments[0]).namelist() == ['zipme/', 'zipme/a.txt', 'zipme/b.txt']
-        assert zipfile.ZipFile(attachments[1]).namelist() == ['single.txt']
+        att_names = [Path(f).name for f in attachments]
+        assert 'zipme.zip' in att_names
+        assert 'single.zip' in att_names
 
     def test_process_attachments_zips_both_single_file_and_directory(self, mocker, tmp_path):
         working_dir = tmp_path
@@ -862,11 +862,10 @@ class TestSendGridHandlerAttachments:
 
         attachments = sendgrid_handler._process_attachments([single_file_to_be_zipped, dir_to_be_zipped])
 
-        #: If we use TemporaryDirectory() as a context manager in _process_attachments, the zip files
-        #: no longer exist for these asserts to check.
         assert len(attachments) == 2
-        assert zipfile.ZipFile(attachments[0]).namelist() == ['single.txt']
-        assert zipfile.ZipFile(attachments[1]).namelist() == ['zipme/', 'zipme/a.txt', 'zipme/b.txt']
+        att_names = [Path(f).name for f in attachments]
+        assert 'zipme.zip' in att_names
+        assert 'single.zip' in att_names
 
     def test_zip_whole_directory(self, mocker, tmp_path):
         working_dir = tmp_path
@@ -889,13 +888,12 @@ class TestSendGridHandlerAttachments:
         working_dir = tmp_path
         temp_a = working_dir / 'a.txt'
         temp_a.write_text('a')
-        temp_dir = TemporaryDirectory().name
-
         sendgrid_mock = mocker.Mock()
 
-        zipped_path = message_handlers.SendGridHandler._zip_single_file(sendgrid_mock, temp_dir, temp_a)
+        with TemporaryDirectory() as temp_dir:
+            zipped_path = message_handlers.SendGridHandler._zip_single_file(sendgrid_mock, temp_dir, temp_a)
 
-        assert zipfile.ZipFile(zipped_path).namelist() == ['a.txt']
+            assert zipfile.ZipFile(zipped_path).namelist() == ['a.txt']
 
     def test_build_attachment_mock_file(self, mocker):
         mock_open = mock.mock_open(read_data=b'test data')
@@ -912,20 +910,21 @@ class TestSendGridHandlerAttachments:
         working_dir = tmp_path
         temp_a = working_dir / 'a.txt'
         temp_a.write_text('a')
-        temp_dir = TemporaryDirectory().name
 
         sendgrid_mock = mocker.Mock()
-        single_zip_path = message_handlers.SendGridHandler._zip_single_file(sendgrid_mock, temp_dir, temp_a)
 
-        with open(single_zip_path, 'rb') as single_zip_file:
-            data = single_zip_file.read()
-        encoded = b64encode(data).decode()
+        with TemporaryDirectory() as temp_dir:
+            single_zip_path = message_handlers.SendGridHandler._zip_single_file(sendgrid_mock, temp_dir, temp_a)
 
-        attachment = message_handlers.SendGridHandler._build_attachment(sendgrid_mock, single_zip_path)
+            with open(single_zip_path, 'rb') as single_zip_file:
+                data = single_zip_file.read()
+            encoded = b64encode(data).decode()
 
-        assert attachment.file_name.get() == 'a.zip'
-        assert attachment.file_type.get() == 'application/zip'
-        assert attachment.file_content.get() == encoded
+            attachment = message_handlers.SendGridHandler._build_attachment(sendgrid_mock, single_zip_path)
+
+            assert attachment.file_name.get() == 'a.zip'
+            assert attachment.file_type.get() == 'application/zip'
+            assert attachment.file_content.get() == encoded
 
     def test_build_attachment_directory(self, mocker, tmp_path):
         working_dir = tmp_path
