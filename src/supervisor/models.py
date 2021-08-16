@@ -119,6 +119,23 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
 
     def __init__(self):
         self.message = ''
-        self.attachments = []  #: Strings or Paths
+        self._attachments = []  #: Strings or Paths
         self.subject = ''
         self.project_name = ''
+
+    @property
+    def attachments(self):
+        """List of paths of files to attach
+
+        Returns:
+            List: Attachment paths
+        """
+        return self._attachments
+
+    @attachments.setter
+    def attachments(self, value):
+        if isinstance(value, list):
+            self._attachments.extend(value)
+
+        else:
+            self._attachments.append(value)
