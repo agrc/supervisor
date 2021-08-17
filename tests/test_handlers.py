@@ -512,6 +512,75 @@ class TestSendGridHandlerParts:
         assert content_object.content == 'This is a\nmessage with newlines'
         assert content_object.mime_type == 'text/plain'
 
+    def test_verify_attachments_bad_Path_input(self, mocker):
+        sendgrid_mock = mocker.Mock()
+        attachments = [3]
+
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+
+        assert 'Cannot get Path() of attachment' in error_message
+        assert attachments == []
+
+    def test_verify_attachments_Path_does_not_exist(self, mocker, tmp_path):
+        bad_path = tmp_path / 'bad.txt'
+
+        sendgrid_mock = mocker.Mock()
+        attachments = [bad_path]
+
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+
+        assert 'does not exist' in error_message
+        assert attachments == []
+
+    def test_verify_attachments_good_Path(self, mocker, tmp_path):
+        good_path = tmp_path / 'a.txt'
+        good_path.write_text('a')
+
+        sendgrid_mock = mocker.Mock()
+        attachments = [good_path]
+
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+
+        assert error_message == ''
+        assert attachments == [Path(good_path)]
+
+    def test_verify_attachments_good_Path_and_bad_Path_input(self, mocker, tmp_path):
+        good_path = tmp_path / 'a.txt'
+        good_path.write_text('a')
+
+        sendgrid_mock = mocker.Mock()
+        attachments = [good_path, 3]
+
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+
+        assert 'Cannot get Path() of attachment' in error_message
+        assert attachments == [Path(good_path)]
+
+    def test_verify_attachments_good_Path_and_Path_not_exist(self, mocker, tmp_path):
+        good_path = tmp_path / 'a.txt'
+        good_path.write_text('a')
+        bad_path = tmp_path / 'b.txt'
+
+        sendgrid_mock = mocker.Mock()
+        attachments = [good_path, bad_path]
+
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+
+        assert 'does not exist' in error_message
+        assert attachments == [Path(good_path)]
+
+    def test_verify_attachments_bad_Path_input_and_Path_not_exist(self, mocker, tmp_path):
+        bad_path = tmp_path / 'b.txt'
+
+        sendgrid_mock = mocker.Mock()
+        attachments = [3, bad_path]
+
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+
+        assert 'does not exist' in error_message
+        assert 'Cannot get Path() of attachment' in error_message
+        assert attachments == []
+
 
 class TestSendGridHandlerWhole:
 

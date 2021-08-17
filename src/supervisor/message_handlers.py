@@ -292,6 +292,25 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return Content('text/plain', message)
 
+    def _verify_attachments(self, attachments):
+        error_message = ''
+        good_attachments = []
+        for attachment in attachments:
+            try:
+                attachment_path = Path(attachment)
+                if not attachment_path.exists():
+                    error_message += f'* Attachment "{attachment}" does not exist\n'
+                    continue
+                good_attachments.append(attachment)
+            except TypeError as e:  # pylint: disable=invalid-name
+                if 'expected str, bytes or os.PathLike object, not' in str(e):
+                    error_message += f'* Cannot get Path() of attachment "{attachment}"\n'
+
+        if error_message:
+            error_message = f'{"="*20}\n Supervisor Warning\n{"="*20}\n{error_message}{"="*20}\n\n'
+
+        return error_message, good_attachments
+
     def _process_attachments(self, attachments):
 
         attachment_objects = []
