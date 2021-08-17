@@ -206,8 +206,10 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         recipient_addresses = self._build_recipient_addresses(to_addresses)
 
         subject = self._build_subject(message_details)
-        content = self._build_content(message_details.message, message_details.project_name)
-        attachments = self._process_attachments(message_details.attachments)
+        attachment_warning, verified_attachments = self._verify_attachments(message_details.attachments)
+        new_message = attachment_warning + message_details.message
+        content = self._build_content(new_message, message_details.project_name)
+        attachments = self._process_attachments(verified_attachments)
 
         #: Build message object and send it
         mail = Mail(sender_address, recipient_addresses, subject, content)

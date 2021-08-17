@@ -766,8 +766,6 @@ class TestSendGridHandlerWhole:
         assert request_body['content'][0]['type'] == 'text/plain'
         assert request_body['content'][0]['value'] == 'This is a\nmulti-line\nmessage\n\nProFoo version: 3.14'
         attachment_names = [att['filename'] for att in request_body['attachments']]
-        # assert request_body['attachments'][0]['filename'] == dir_to_be_attached.with_suffix('.zip').name
-        # assert request_body['attachments'][1]['filename'] == single_file.with_suffix('.zip').name
         assert dir_to_be_attached.with_suffix('.zip').name in attachment_names
         assert single_file.with_suffix('.zip').name in attachment_names
 
@@ -813,10 +811,110 @@ class TestSendGridHandlerWhole:
         assert request_body['content'][0]['type'] == 'text/plain'
         assert request_body['content'][0]['value'] == 'This is a\nmulti-line\nmessage\n\nProFoo version: 3.14'
         attachment_names = [att['filename'] for att in request_body['attachments']]
-        # assert request_body['attachments'][0]['filename'] == dir_to_be_attached.with_suffix('.zip').name
-        # assert request_body['attachments'][1]['filename'] == single_file.with_suffix('.zip').name
         assert dir_to_be_attached.with_suffix('.zip').name in attachment_names
         assert single_file.with_suffix('.zip').name in attachment_names
+
+    def test_send_message_full_integration_with_non_existant_single_file_attachment(self, mocker, tmp_path):
+
+        sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
+
+        distribution_Mock = mocker.Mock()
+        distribution_Mock.version = 3.14
+        distributions = [distribution_Mock]
+        mocker.patch('pkg_resources.require', return_value=distributions)
+
+        sendgrid_settings = {
+            'from_address': 'foo@example.com',
+            'to_addresses': 'cheddar@example.com',
+            'api_key': 'itsasecret',
+        }
+
+        bad_file = tmp_path / 'bad.txt'
+
+        message_details = models.MessageDetails()
+        message_details.message = 'This is a\nmulti-line\nmessage'
+        message_details.project_name = 'ProFoo'
+        message_details.attachments = [bad_file]
+
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+
+        sendgrid_handler.send_message(message_details)
+
+        request_body = sendgrid_handler.sendgrid_client.client.mail.send.post.call_args[1]['request_body']
+        assert request_body['from']['email'] == 'foo@example.com'
+        assert request_body['personalizations'][0]['to'][0]['email'] == 'cheddar@example.com'
+        assert request_body['content'][0]['type'] == 'text/plain'
+        assert 'This is a\nmulti-line\nmessage\n\nProFoo version: 3.14' in request_body['content'][0]['value']
+        assert 'does not exist' in request_body['content'][0]['value']
+        assert 'attachments' not in request_body
+
+    def test_send_message_full_integration_with_nonpath_single_file_attachment(self, mocker):
+
+        sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
+
+        distribution_Mock = mocker.Mock()
+        distribution_Mock.version = 3.14
+        distributions = [distribution_Mock]
+        mocker.patch('pkg_resources.require', return_value=distributions)
+
+        sendgrid_settings = {
+            'from_address': 'foo@example.com',
+            'to_addresses': 'cheddar@example.com',
+            'api_key': 'itsasecret',
+        }
+
+        message_details = models.MessageDetails()
+        message_details.message = 'This is a\nmulti-line\nmessage'
+        message_details.project_name = 'ProFoo'
+        message_details.attachments = [3]
+
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+
+        sendgrid_handler.send_message(message_details)
+
+        request_body = sendgrid_handler.sendgrid_client.client.mail.send.post.call_args[1]['request_body']
+        assert request_body['from']['email'] == 'foo@example.com'
+        assert request_body['personalizations'][0]['to'][0]['email'] == 'cheddar@example.com'
+        assert request_body['content'][0]['type'] == 'text/plain'
+        assert 'This is a\nmulti-line\nmessage\n\nProFoo version: 3.14' in request_body['content'][0]['value']
+        assert 'Cannot get Path() of attachment' in request_body['content'][0]['value']
+        assert 'attachments' not in request_body
+
+    def test_send_message_full_integration_with_good_and_bad_single_file_attachment(self, mocker, tmp_path):
+
+        sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
+
+        distribution_Mock = mocker.Mock()
+        distribution_Mock.version = 3.14
+        distributions = [distribution_Mock]
+        mocker.patch('pkg_resources.require', return_value=distributions)
+
+        sendgrid_settings = {
+            'from_address': 'foo@example.com',
+            'to_addresses': 'cheddar@example.com',
+            'api_key': 'itsasecret',
+        }
+
+        good_file = tmp_path / 'good.txt'
+        good_file.write_text('good')
+
+        message_details = models.MessageDetails()
+        message_details.message = 'This is a\nmulti-line\nmessage'
+        message_details.project_name = 'ProFoo'
+        message_details.attachments = [good_file, 3]
+
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+
+        sendgrid_handler.send_message(message_details)
+
+        request_body = sendgrid_handler.sendgrid_client.client.mail.send.post.call_args[1]['request_body']
+        assert request_body['from']['email'] == 'foo@example.com'
+        assert request_body['personalizations'][0]['to'][0]['email'] == 'cheddar@example.com'
+        assert request_body['content'][0]['type'] == 'text/plain'
+        assert 'This is a\nmulti-line\nmessage\n\nProFoo version: 3.14' in request_body['content'][0]['value']
+        assert 'Cannot get Path() of attachment' in request_body['content'][0]['value']
+        attachment_names = [att['filename'] for att in request_body['attachments']]
+        assert good_file.with_suffix('.zip').name in attachment_names
 
 
 class TestSendGridHandlerAttachments:
