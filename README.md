@@ -12,6 +12,7 @@ supervisor provides a framework for scripts scheduled through Windows' Task Sche
 - Redirects exception handling to a custom handler
 - Provides custom messaging handler to direct errors and any other end-of-script output to e-mail and (eventually) Slack
   - Works with any SMTP server supported by Python's `smtp` library
+  - Works with the SendGrid email API
 - Binds messaging settings and credentials to project (maybe not the best thing? Still have to change them project-by-project, but they will be in a consistent location in each project)
 
 ## Usage
@@ -23,12 +24,15 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
    - `cd c:\root\path\where\you\store\your\code` (ie, `cd c:\gis\git`)
 1. Install supervisor (or add to your project's `setup.py`)
    - `pip install agrc-supervisor`
-1. In your script's entry point code (usually `main.py`), before any arg parsing:
-   - Instantiate a `Supervisor` object, passing in the name of your project
+1. In your script's entry point code (usually `main.py`), as early as possible and generally before any arg parsing:
+   - Instantiate a `Supervisor` object
+   - Instantiate and register the desired `MessageHandler`s with the `Supervisor Object`
+      - Create the appropriate settings dictionaries before creating the `MessageHandler`s
 1. Call `.notify()` on the `Supervisor` object after your business logic:
-   - In `main.py` (or wherever you instantiated the object), passing the message and path to the log file
+   - In `main.py` (or wherever you instantiated the `Supervisor` object), passing the message and path to the log file
    - —OR—
    - Elsewhere in your business logic, having passed your `Supervisor` object through your logic as needed.
+1. After instantiation, the `Supervisor` object will direct all errors to its custom error handler. This will send messages to every registered handler whenever an error occurs.
 
 ## Development Environment
 
