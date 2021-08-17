@@ -637,9 +637,9 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        message_details.project_name = 'ProFoo'
+        # message_details.project_name = 'ProFoo'
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
         sendgrid_handler.send_message(message_details)
 
@@ -671,10 +671,10 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        message_details.project_name = 'ProFoo'
+        # message_details.project_name = 'ProFoo'
         message_details.attachments = [temp_a]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
         sendgrid_handler.send_message(message_details)
 
@@ -710,10 +710,10 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        message_details.project_name = 'ProFoo'
+        # message_details.project_name = 'ProFoo'
         message_details.attachments = [dir_to_be_attached]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
         sendgrid_handler.send_message(message_details)
 
@@ -753,10 +753,10 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        message_details.project_name = 'ProFoo'
+        # message_details.project_name = 'ProFoo'
         message_details.attachments = [dir_to_be_attached, single_file]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
         sendgrid_handler.send_message(message_details)
 
@@ -798,10 +798,10 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        message_details.project_name = 'ProFoo'
+        # message_details.project_name = 'ProFoo'
         message_details.attachments = [single_file, dir_to_be_attached]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
         sendgrid_handler.send_message(message_details)
 
@@ -833,10 +833,10 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        message_details.project_name = 'ProFoo'
+        # message_details.project_name = 'ProFoo'
         message_details.attachments = [bad_file]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
         sendgrid_handler.send_message(message_details)
 
@@ -865,10 +865,10 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        message_details.project_name = 'ProFoo'
+        # message_details.project_name = 'ProFoo'
         message_details.attachments = [3]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
         sendgrid_handler.send_message(message_details)
 
@@ -900,10 +900,10 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        message_details.project_name = 'ProFoo'
+        # message_details.project_name = 'ProFoo'
         message_details.attachments = [good_file, 3]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
         sendgrid_handler.send_message(message_details)
 

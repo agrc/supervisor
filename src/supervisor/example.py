@@ -60,7 +60,7 @@ if __name__ == '__main__':
     }
 
     #: Instantiate a new SendGridHandler and register it with our Supervisor
-    sim_sup.add_message_handler(SendGridHandler(sendgrid_settings))
+    sim_sup.add_message_handler(SendGridHandler(sendgrid_settings, 'agrc-supervisor'))
 
     #: Send a message with both a directory attachment and a single file attachment
     message = MessageDetails()

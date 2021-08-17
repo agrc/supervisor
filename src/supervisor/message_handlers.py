@@ -184,9 +184,10 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Build a message and send using the SendGrid API's helper classes
     """
 
-    def __init__(self, sendgrid_settings):
+    def __init__(self, sendgrid_settings, project_name=''):
         self.sendgrid_settings = sendgrid_settings
         self.sendgrid_client = sendgrid.SendGridAPIClient(api_key=self.sendgrid_settings['api_key'])
+        self.project_name = project_name
 
     def send_message(self, message_details):
         """Construct and send an email message with the SendGrid API
@@ -208,7 +209,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         subject = self._build_subject(message_details)
         attachment_warning, verified_attachments = self._verify_attachments(message_details.attachments)
         new_message = attachment_warning + message_details.message
-        content = self._build_content(new_message, message_details.project_name)
+        content = self._build_content(new_message, self.project_name)
         attachments = self._process_attachments(verified_attachments)
 
         #: Build message object and send it
