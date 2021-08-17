@@ -1052,8 +1052,11 @@ class TestSendGridHandlerAttachments:
         zipped_path = message_handlers.SendGridHandler._zip_whole_directory(
             sendgrid_mock, working_dir, dir_to_be_zipped
         )
-
-        assert zipfile.ZipFile(zipped_path).namelist() == ['zipme/', 'zipme/a.txt', 'zipme/b.txt']
+        zip_name_list = zipfile.ZipFile(zipped_path).namelist()
+        assert 'zipme/' in zip_name_list
+        assert 'zipme/a.txt' in zip_name_list
+        assert 'zipme/b.txt' in zip_name_list
+        # assert zipfile.ZipFile(zipped_path).namelist() == ['zipme/', 'zipme/a.txt', 'zipme/b.txt']
 
     def test_zip_single_file(self, mocker, tmp_path):
         working_dir = tmp_path
