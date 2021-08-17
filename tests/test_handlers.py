@@ -495,7 +495,9 @@ class TestSendGridHandlerParts:
         message_details.message = 'This is a\nmessage with newlines'
         message_details.project_name = 'ProFoo'
 
-        content_object = message_handlers.SendGridHandler._build_content(sendgrid_mock, message_details)
+        content_object = message_handlers.SendGridHandler._build_content(
+            sendgrid_mock, message_details.message, message_details.project_name
+        )
         assert content_object.content == 'This is a\nmessage with newlines\n\nProFoo version: 0'
         assert content_object.mime_type == 'text/plain'
 
@@ -508,7 +510,9 @@ class TestSendGridHandlerParts:
         message_details.message = 'This is a\nmessage with newlines'
         message_details.project_name = 'ProFoo'
 
-        content_object = message_handlers.SendGridHandler._build_content(sendgrid_mock, message_details)
+        content_object = message_handlers.SendGridHandler._build_content(
+            sendgrid_mock, message_details.message, message_details.project_name
+        )
         assert content_object.content == 'This is a\nmessage with newlines'
         assert content_object.mime_type == 'text/plain'
 

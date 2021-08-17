@@ -206,7 +206,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         recipient_addresses = self._build_recipient_addresses(to_addresses)
 
         subject = self._build_subject(message_details)
-        content = self._build_content(message_details)
+        content = self._build_content(message_details.message, message_details.project_name)
         attachments = self._process_attachments(message_details.attachments)
 
         #: Build message object and send it
@@ -272,7 +272,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return subject
 
-    def _build_content(self, message_details):  #pylint: disable=no-self-use
+    def _build_content(self, message, project_name):  #pylint: disable=no-self-use
         """Add client version if desired and package into plaintext Content object
 
         Args:
@@ -281,13 +281,12 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Returns:
             Content: Content of email as a SendGrid Content object
         """
-        message = message_details.message
 
         #: Get the client's version (assuming client has been installed via pip install and setup.py)
-        distributions = pkg_resources.require(message_details.project_name)
+        distributions = pkg_resources.require(project_name)
         if distributions:
             version = distributions[0].version
-            version = f'\n\n{message_details.project_name} version: {version}'
+            version = f'\n\n{project_name} version: {version}'
             message += version
 
         return Content('text/plain', message)
