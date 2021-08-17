@@ -35,13 +35,13 @@ def test_build_message_without_attachments(mocker):
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
-    message_details.project_name = 'testing'
 
     handler_mock = mocker.Mock()
     handler_mock.email_settings = {
         'to_addresses': 'foo@example.com',
         'from_address': 'testing@example.com',
     }
+    handler_mock.project_name = 'testing'
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -62,7 +62,6 @@ def test_build_message_with_None_attachment(mocker):
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
-    message_details.project_name = 'testing'
     message_details.attachments = [None]
 
     handler_mock = mocker.Mock()
@@ -70,6 +69,7 @@ def test_build_message_with_None_attachment(mocker):
         'to_addresses': 'foo@example.com',
         'from_address': 'testing@example.com',
     }
+    handler_mock.project_name = 'testing'
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -90,7 +90,6 @@ def test_build_message_with_empty_str_attachment_path(mocker):
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
-    message_details.project_name = 'testing'
     message_details.attachments = ['']
 
     handler_mock = mocker.Mock()
@@ -98,6 +97,7 @@ def test_build_message_with_empty_str_attachment_path(mocker):
         'to_addresses': 'foo@example.com',
         'from_address': 'testing@example.com',
     }
+    handler_mock.project_name = 'testing'
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -118,7 +118,6 @@ def test_build_message_with_subject_prefix(mocker):
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
-    message_details.project_name = 'testing'
 
     handler_mock = mocker.Mock()
     handler_mock.email_settings = {
@@ -126,6 +125,7 @@ def test_build_message_with_subject_prefix(mocker):
         'from_address': 'testing@example.com',
         'prefix': 'test prefix: ',
     }
+    handler_mock.project_name = 'testing'
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -146,13 +146,13 @@ def test_build_message_with_multiple_to_addresses(mocker):
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
-    message_details.project_name = 'testing'
 
     handler_mock = mocker.Mock()
     handler_mock.email_settings = {
         'to_addresses': ['foo@example.com', 'bar@example.com', 'baz@example.com'],
         'from_address': 'testing@example.com',
     }
+    handler_mock.project_name = 'testing'
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 

@@ -33,10 +33,9 @@ class Supervisor:
         Closure around a replacement for sys.excepthook
     """
 
-    def __init__(self, project_name, logger=None, log_path=None):
+    def __init__(self, logger=None, log_path=None):
 
         #: Set up our list of MessageHandlers
-        self.project_name = project_name
         self.message_handlers = []
         self.logger = logger
         self.log_path = log_path
@@ -94,7 +93,6 @@ class Supervisor:
             message_details.message = error
             message_details.subject = 'ERROR'
             message_details.attachments = [self.log_path]
-            message_details.project_name = self.project_name
             self.notify(message_details)
 
         return global_exception_handler
@@ -111,8 +109,6 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
         Strings or Paths to any attachments, including log files
     subject : str
         The message subject
-    project_name : str
-        The name of the project that has added the Supervisor object. Used for adding the version to notifications.
 
     TODO: Implement true Null-Object pattern.
     """
@@ -121,7 +117,6 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
         self.message = ''
         self._attachments = []  #: Strings or Paths
         self.subject = ''
-        self.project_name = ''
 
     @property
     def attachments(self):

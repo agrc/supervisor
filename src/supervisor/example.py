@@ -29,23 +29,23 @@ if __name__ == '__main__':
     test_logger.info(f'test run: {datetime.datetime.now()}')
 
     #: Instantiate a Supervisor object
-    sim_sup = Supervisor('supervisor', logger=test_logger, log_path=test_path)
+    sim_sup = Supervisor(logger=test_logger, log_path=test_path)
 
     #: ============
     #: EmailHandler
     #: ============
 
-    # #: Specify the email server and addresses
-    # email_settings = {
-    #     'smtpServer': 'send.state.ut.us',
-    #     'smtpPort': 25,
-    #     'from_address': 'noreply@utah.gov',
-    #     'to_addresses': 'jdadams@utah.gov',
-    #     'prefix': f'Example on {socket.gethostname()}: '
-    # }
+    #: Specify the email server and addresses
+    email_settings = {
+        'smtpServer': 'send.state.ut.us',
+        'smtpPort': 25,
+        'from_address': 'noreply@utah.gov',
+        'to_addresses': 'jdadams@utah.gov',
+        'prefix': f'Example on {socket.gethostname()}: '
+    }
 
-    # #: Instantiate a new EmailHandler and register it with our Supervisor
-    # sim_sup.add_message_handler(EmailHandler(email_settings))
+    #: Instantiate a new EmailHandler and register it with our Supervisor
+    sim_sup.add_message_handler(EmailHandler(email_settings, 'agrc-supervisor'))
 
     #: ===============
     #: SendGridHandler

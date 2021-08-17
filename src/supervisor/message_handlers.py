@@ -59,8 +59,9 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         gzip input_path into a MIMEApplication object
     """
 
-    def __init__(self, email_settings):
+    def __init__(self, email_settings, project_name=''):
         self.email_settings = email_settings
+        self.project_name = project_name
 
     def send_message(self, message_details):
         """Build a message, create an SMTP object, and send the message
@@ -113,10 +114,10 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         message.attach(MIMEText(message_details.message, 'html'))
 
         #: Get the client's version (assuming client has been installed via pip install and setup.py)
-        distributions = pkg_resources.require(message_details.project_name)
+        distributions = pkg_resources.require(self.project_name)
         if distributions:
             version = distributions[0].version
-            version = MIMEText(f'<p>{message_details.project_name} version: {version}</p>', 'html')
+            version = MIMEText(f'<p>{self.project_name} version: {version}</p>', 'html')
             message.attach(version)
 
         #: Split recipient addresses if needed.
