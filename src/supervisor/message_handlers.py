@@ -48,6 +48,8 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     ----------
     email_settings : dict
         From and To addresses, SMTP Server and Port
+    project_name : str
+        pip-install name of the client project for client version number reporting
 
     Methods
     -------
@@ -69,8 +71,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Parameters
         ----------
         mesage_details : MessageDetails
-            Passed through to _build_message. Must have .message, .subject, .project_name; may
-            have .attachments
+            Passed through to _build_message. Must have .message, .subject; may have .attachments
         """
 
         #: Configure outgoing settings
@@ -101,7 +102,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Parameters
         ----------
         mesage_details : MessageDetails
-            Must have .message, .subject, .project_name; may have .attachments
+            Must have .message, .subject; may have .attachments
 
         Returns
         -------
@@ -178,6 +179,9 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     sendgrid_settings : dict
         'from_address' (str)
         'to_addresses' (str or List): single string or list of strings
+        'api_key' (str): SendGrid api key
+    project_name : str
+        pip-install name of the client project for client version number reporting
 
     Methods
     -------
@@ -195,7 +199,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         Args:
             message_details : MessageDetails
-                Must have .message, .subject, .project_name; may have .attachments
+                Must have .message, .subject; may have .attachments
         """
 
         from_address, to_addresses = self._verify_addresses()
@@ -280,7 +284,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         """Add client version if desired and package into plaintext Content object
 
         Args:
-            message_details (MessageDetails): Uses .project_name to get client version
+            message (str): Main message content
+            project_name (str): pip-install name of the client project for client version number reporting
 
         Returns:
             Content: Content of email as a SendGrid Content object
@@ -324,6 +329,14 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return error_message, good_attachments
 
     def _process_attachments(self, attachments):
+        """Create Attachment objects containing zipped files from pre-verified attachment paths
+
+        Args:
+            attachments (List): Pre-verified strs or Paths to single files and/or directories, will be zipped
+
+        Returns:
+            Attachment: Attachment objects ready to be added to Mail
+        """
 
         attachment_objects = []
 
@@ -340,16 +353,31 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return attachment_objects
 
     def _zip_whole_directory(self, working_dir, dir_to_be_zipped):  #pylint: disable=no-self-use
+        """Create a zipfile containing a directory and all its contents
 
-        #: Zip a whole directory to the tempdir, return its path
+        Args:
+            working_dir (str or Path): A directory to store the new zipfile
+            dir_to_be_zipped (str or Path): The directory to be zipped
+
+        Returns:
+            str: Path to the new zipfile
+        """
+
         attachment_dir = Path(dir_to_be_zipped)
         zip_base_name = Path(working_dir, attachment_dir.name)
         zip_out_path = make_archive(zip_base_name, 'zip', root_dir=attachment_dir.parent, base_dir=attachment_dir.name)
         return zip_out_path
 
     def _zip_single_file(self, working_dir, attachment):  #pylint: disable=no-self-use
+        """Create a zipfile containing a single file
 
-        #: Zip a single file to the tempdir, return its path
+        Args:
+            working_dir (str or Path): A directory to store the new zipfile
+            attachment (str or Path): The file to be zipped
+
+        Returns:
+            Path: Path to the new zipfile
+        """
         attachment_path = Path(attachment)
         zip_out_path = Path(working_dir, attachment_path.stem).with_suffix('.zip')
         with ZipFile(zip_out_path, 'x', compression=ZIP_DEFLATED) as new_zip:
@@ -357,7 +385,14 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return zip_out_path
 
     def _build_attachment(self, zip_path):  #pylint: disable=no-self-use
+        """Create an Attachment object by base64-encoding the specified file-like object
 
+        Args:
+            zip_path (str or Path): Path to the file to be attached
+
+        Returns:
+            Attachment: Attachment object ready to be added to Mail object.
+        """
         #: Build a SendGrid Attachment object with various fields
         with open(zip_path, 'rb') as zip_file:
             data = zip_file.read()

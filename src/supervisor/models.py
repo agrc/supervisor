@@ -14,8 +14,6 @@ class Supervisor:
 
     Attributes
     ----------
-    project_name : str
-        The name of the client project using Supervisor; used to report version in global exception handler messages
     message_handlers : [MessageHandler]
         Notifications will be sent via all handlers in this list
     logger : Logger
