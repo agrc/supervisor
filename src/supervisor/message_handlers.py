@@ -214,7 +214,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         #: Build message object and send it
         mail = Mail(sender_address, recipient_addresses, subject, content)
         mail.attachment = attachments
-        response = self.sendgrid_client.client.mail.send.post(request_body=mail.get())
+        response = self.sendgrid_client.client.mail.send.post(request_body=mail.get())  # pylint: disable=unused-variable
 
         #: Maybe test the response via response.status_code?
 
@@ -293,7 +293,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return Content('text/plain', message)
 
-    def _verify_attachments(self, attachments):
+    def _verify_attachments(self, attachments):  #pylint: disable=no-self-use
         """Make sure attachments are legitimate Paths
 
         Args:
@@ -337,7 +337,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return attachment_objects
 
-    def _zip_whole_directory(self, working_dir, dir_to_be_zipped):
+    def _zip_whole_directory(self, working_dir, dir_to_be_zipped):  #pylint: disable=no-self-use
 
         #: Zip a whole directory to the tempdir, return its path
         attachment_dir = Path(dir_to_be_zipped)
@@ -345,7 +345,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         zip_out_path = make_archive(zip_base_name, 'zip', root_dir=attachment_dir.parent, base_dir=attachment_dir.name)
         return zip_out_path
 
-    def _zip_single_file(self, working_dir, attachment):
+    def _zip_single_file(self, working_dir, attachment):  #pylint: disable=no-self-use
 
         #: Zip a single file to the tempdir, return its path
         attachment_path = Path(attachment)
@@ -354,7 +354,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             new_zip.write(attachment_path, attachment_path.name)
         return zip_out_path
 
-    def _build_attachment(self, zip_path):
+    def _build_attachment(self, zip_path):  #pylint: disable=no-self-use
 
         #: Build a SendGrid Attachment object with various fields
         with open(zip_path, 'rb') as zip_file:
