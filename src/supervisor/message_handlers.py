@@ -294,6 +294,15 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return Content('text/plain', message)
 
     def _verify_attachments(self, attachments):
+        """Make sure attachments are legitimate Paths
+
+        Args:
+            attachments (List): strs or Paths of files to be attached
+
+        Returns:
+            str, List: Warning message to be appended to main message, list of verified attachments
+        """
+
         error_message = ''
         good_attachments = []
         for attachment in attachments:
