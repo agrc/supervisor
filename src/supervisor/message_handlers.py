@@ -10,7 +10,6 @@ from base64 import b64encode
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from os import stat
 from pathlib import Path
 from shutil import make_archive
 from smtplib import SMTP
