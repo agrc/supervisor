@@ -254,7 +254,7 @@ def test_gzipper(mocker, tmp_path):
         temp_file.write('test text')
     temp_name = temp_path.name + '.gz'
 
-    attachment = message_handlers.EmailHandler._build_gzip_attachment(mocker.Mock(), temp_path)
+    attachment = message_handlers.EmailHandler._build_gzip_attachment(temp_path)
 
     assert attachment.get_content_type() == 'application/x-gzip'
     assert attachment.get_content_disposition() == 'attachment'
@@ -452,16 +452,14 @@ class TestSendGridHandlerParts:
             assert to_addr is None
 
     def test_build_recipient_addresses_one_addr(self, mocker):
-        sendgrid_mock = mocker.Mock()
         to_addr = 'foo@bar.com'
-        recipient_list = message_handlers.SendGridHandler._build_recipient_addresses(sendgrid_mock, to_addr)
+        recipient_list = message_handlers.SendGridHandler._build_recipient_addresses(to_addr)
         assert len(recipient_list) == 1
         assert recipient_list[0].email == 'foo@bar.com'
 
     def test_build_recipient_addresses_multiple_addrs(self, mocker):
-        sendgrid_mock = mocker.Mock()
         to_addr = ['foo@bar.com', 'cheddar@baz.com']
-        recipient_list = message_handlers.SendGridHandler._build_recipient_addresses(sendgrid_mock, to_addr)
+        recipient_list = message_handlers.SendGridHandler._build_recipient_addresses(to_addr)
         assert len(recipient_list) == 2
         assert recipient_list[0].email == 'foo@bar.com'
         assert recipient_list[1].email == 'cheddar@baz.com'
@@ -484,8 +482,6 @@ class TestSendGridHandlerParts:
         assert subject == 'Bar Prefix—Foo Subject'
 
     def test_build_content_with_version(self, mocker):
-        sendgrid_mock = mocker.Mock()
-
         distribution_Mock = mocker.Mock()
         distribution_Mock.version = 0
         distributions = [distribution_Mock]
@@ -496,14 +492,12 @@ class TestSendGridHandlerParts:
         message_details.project_name = 'ProFoo'
 
         content_object = message_handlers.SendGridHandler._build_content(
-            sendgrid_mock, message_details.message, message_details.project_name
+            message_details.message, message_details.project_name
         )
         assert content_object.content == 'This is a\nmessage with newlines\n\nProFoo version: 0'
         assert content_object.mime_type == 'text/plain'
 
     def test_build_content_without_version(self, mocker):
-        sendgrid_mock = mocker.Mock()
-
         mocker.patch('pkg_resources.require', return_value=[])
 
         message_details = models.MessageDetails()
@@ -511,16 +505,15 @@ class TestSendGridHandlerParts:
         message_details.project_name = 'ProFoo'
 
         content_object = message_handlers.SendGridHandler._build_content(
-            sendgrid_mock, message_details.message, message_details.project_name
+            message_details.message, message_details.project_name
         )
         assert content_object.content == 'This is a\nmessage with newlines'
         assert content_object.mime_type == 'text/plain'
 
     def test_verify_attachments_bad_Path_input(self, mocker):
-        sendgrid_mock = mocker.Mock()
         attachments = [3]
 
-        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(attachments)
 
         assert 'Cannot get Path() of attachment' in error_message
         assert attachments == []
@@ -528,10 +521,9 @@ class TestSendGridHandlerParts:
     def test_verify_attachments_Path_does_not_exist(self, mocker, tmp_path):
         bad_path = tmp_path / 'bad.txt'
 
-        sendgrid_mock = mocker.Mock()
         attachments = [bad_path]
 
-        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(attachments)
 
         assert 'does not exist' in error_message
         assert attachments == []
@@ -540,10 +532,9 @@ class TestSendGridHandlerParts:
         good_path = tmp_path / 'a.txt'
         good_path.write_text('a')
 
-        sendgrid_mock = mocker.Mock()
         attachments = [good_path]
 
-        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(attachments)
 
         assert error_message == ''
         assert attachments == [Path(good_path)]
@@ -552,10 +543,9 @@ class TestSendGridHandlerParts:
         good_path = tmp_path / 'a.txt'
         good_path.write_text('a')
 
-        sendgrid_mock = mocker.Mock()
         attachments = [good_path, 3]
 
-        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(attachments)
 
         assert 'Cannot get Path() of attachment' in error_message
         assert attachments == [Path(good_path)]
@@ -565,10 +555,9 @@ class TestSendGridHandlerParts:
         good_path.write_text('a')
         bad_path = tmp_path / 'b.txt'
 
-        sendgrid_mock = mocker.Mock()
         attachments = [good_path, bad_path]
 
-        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(attachments)
 
         assert 'does not exist' in error_message
         assert attachments == [Path(good_path)]
@@ -576,10 +565,9 @@ class TestSendGridHandlerParts:
     def test_verify_attachments_bad_Path_input_and_Path_not_exist(self, mocker, tmp_path):
         bad_path = tmp_path / 'b.txt'
 
-        sendgrid_mock = mocker.Mock()
         attachments = [3, bad_path]
 
-        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(sendgrid_mock, attachments)
+        error_message, attachments = message_handlers.SendGridHandler._verify_attachments(attachments)
 
         assert 'does not exist' in error_message
         assert 'Cannot get Path() of attachment' in error_message
@@ -1047,11 +1035,7 @@ class TestSendGridHandlerAttachments:
         temp_b = dir_to_be_zipped / 'b.txt'
         temp_b.write_text('b')
 
-        sendgrid_mock = mocker.Mock()
-
-        zipped_path = message_handlers.SendGridHandler._zip_whole_directory(
-            sendgrid_mock, working_dir, dir_to_be_zipped
-        )
+        zipped_path = message_handlers.SendGridHandler._zip_whole_directory(working_dir, dir_to_be_zipped)
         zip_name_list = zipfile.ZipFile(zipped_path).namelist()
         assert 'zipme/' in zip_name_list
         assert 'zipme/a.txt' in zip_name_list
@@ -1062,19 +1046,17 @@ class TestSendGridHandlerAttachments:
         working_dir = tmp_path
         temp_a = working_dir / 'a.txt'
         temp_a.write_text('a')
-        sendgrid_mock = mocker.Mock()
 
         with TemporaryDirectory() as temp_dir:
-            zipped_path = message_handlers.SendGridHandler._zip_single_file(sendgrid_mock, temp_dir, temp_a)
+            zipped_path = message_handlers.SendGridHandler._zip_single_file(temp_dir, temp_a)
 
             assert zipfile.ZipFile(zipped_path).namelist() == ['a.txt']
 
     def test_build_attachment_mock_file(self, mocker):
         mock_open = mock.mock_open(read_data=b'test data')
-        sendgrid_mock = mocker.Mock()
 
         with mock.patch('builtins.open', mock_open):
-            attachment = message_handlers.SendGridHandler._build_attachment(sendgrid_mock, 'foo')
+            attachment = message_handlers.SendGridHandler._build_attachment('foo')
 
             assert attachment.file_name.get() == 'foo'
             assert attachment.file_type.get() == 'application/zip'
@@ -1085,16 +1067,14 @@ class TestSendGridHandlerAttachments:
         temp_a = working_dir / 'a.txt'
         temp_a.write_text('a')
 
-        sendgrid_mock = mocker.Mock()
-
         with TemporaryDirectory() as temp_dir:
-            single_zip_path = message_handlers.SendGridHandler._zip_single_file(sendgrid_mock, temp_dir, temp_a)
+            single_zip_path = message_handlers.SendGridHandler._zip_single_file(temp_dir, temp_a)
 
             with open(single_zip_path, 'rb') as single_zip_file:
                 data = single_zip_file.read()
             encoded = b64encode(data).decode()
 
-            attachment = message_handlers.SendGridHandler._build_attachment(sendgrid_mock, single_zip_path)
+            attachment = message_handlers.SendGridHandler._build_attachment(single_zip_path)
 
             assert attachment.file_name.get() == 'a.zip'
             assert attachment.file_type.get() == 'application/zip'
@@ -1109,16 +1089,13 @@ class TestSendGridHandlerAttachments:
         temp_b = dir_to_be_zipped / 'b.txt'
         temp_b.write_text('b')
 
-        sendgrid_mock = mocker.Mock()
-        dir_zip_path = message_handlers.SendGridHandler._zip_whole_directory(
-            sendgrid_mock, working_dir, dir_to_be_zipped
-        )
+        dir_zip_path = message_handlers.SendGridHandler._zip_whole_directory(working_dir, dir_to_be_zipped)
 
         with open(dir_zip_path, 'rb') as dir_zip_file:
             data = dir_zip_file.read()
         encoded = b64encode(data).decode()
 
-        attachment = message_handlers.SendGridHandler._build_attachment(sendgrid_mock, dir_zip_path)
+        attachment = message_handlers.SendGridHandler._build_attachment(dir_zip_path)
 
         assert attachment.file_name.get() == 'zipme.zip'
         assert attachment.file_type.get() == 'application/zip'

@@ -10,6 +10,7 @@ from base64 import b64encode
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from os import stat
 from pathlib import Path
 from shutil import make_archive
 from smtplib import SMTP
@@ -147,7 +148,8 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return message
 
-    def _build_gzip_attachment(self, input_path):  #pylint: disable=no-self-use
+    @staticmethod
+    def _build_gzip_attachment(input_path):
         """gzip input_path into a MIMEApplication object
 
         Parameters
@@ -245,7 +247,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return from_address, to_addresses
 
-    def _build_recipient_addresses(self, to_addresses):  #pylint: disable=no-self-use
+    @staticmethod
+    def _build_recipient_addresses(to_addresses):
         """Craft 'to' addresses into a list of SendGrid 'To' objects
 
         Args:
@@ -277,7 +280,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return subject
 
-    def _build_content(self, message, project_name):  #pylint: disable=no-self-use
+    @staticmethod
+    def _build_content(message, project_name):
         """Add client version if desired and package into plaintext Content object
 
         Args:
@@ -297,7 +301,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return Content('text/plain', message)
 
-    def _verify_attachments(self, attachments):  #pylint: disable=no-self-use
+    @staticmethod
+    def _verify_attachments(attachments):
         """Make sure attachments are legitimate Paths
 
         Args:
@@ -349,7 +354,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return attachment_objects
 
-    def _zip_whole_directory(self, working_dir, dir_to_be_zipped):  #pylint: disable=no-self-use
+    @staticmethod
+    def _zip_whole_directory(working_dir, dir_to_be_zipped):
         """Create a zipfile containing a directory and all its contents
 
         Args:
@@ -365,7 +371,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         zip_out_path = make_archive(zip_base_name, 'zip', root_dir=attachment_dir.parent, base_dir=attachment_dir.name)
         return zip_out_path
 
-    def _zip_single_file(self, working_dir, attachment):  #pylint: disable=no-self-use
+    @staticmethod
+    def _zip_single_file(working_dir, attachment):
         """Create a zipfile containing a single file
 
         Args:
@@ -381,7 +388,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             new_zip.write(attachment_path, attachment_path.name)
         return zip_out_path
 
-    def _build_attachment(self, zip_path):  #pylint: disable=no-self-use
+    @staticmethod
+    def _build_attachment(zip_path):
         """Create an Attachment object by base64-encoding the specified file-like object
 
         Args:
