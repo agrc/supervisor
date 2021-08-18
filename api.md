@@ -10,7 +10,7 @@ The Supervisor is the main object used to coordinate messaging and error handlin
 
 - `message_handlers` (List): Notifications will be sent via all handlers in this list
 - `logger` (Logger, optional): Logger object to use in global exception handler
-- `log_path` (Path, optional): Path to a logfile to attach to exception messages
+- `log_path` (Path, optional): Path to a logfile to attach to exception messages sent via `.notify()` (usually emails)
 
 ### Methods
 
@@ -23,7 +23,7 @@ The Supervisor is the main object used to coordinate messaging and error handlin
 
 You'll instantiate a single Supervisor object to handle messaging and exceptions for the client program (whatever program you're wanting to automate through Windows Task Scheduler).
 
-The optional logging arguments on the constructor can be used messages in the exception handler. The `logger` will be used to log any errors caught by the exception handler. `log_path` will be added as an attachment to any exception messages.
+The optional logging arguments on the constructor can be used by the exception handler. The `logger` will be used to log any errors caught by the exception handler. `log_path` can be added as an attachment to any exception messages sent by the registered `MessageHandlers`.
 
 The information in these parameters are not passed to any message handler by default. Any information must be passed as part of a MessageDetails object.
 

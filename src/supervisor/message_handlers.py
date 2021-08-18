@@ -259,10 +259,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         if isinstance(to_addresses, str):
             return [To(to_addresses)]
 
-        recipient_addresses = []
-        for address in to_addresses:
-            recipient_addresses.append(To(address))
-        return recipient_addresses
+        return [To(address) for address in to_addresses]
 
     def _build_subject(self, message_details):
         """Add prefix to subject if needed
