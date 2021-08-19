@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 from unittest import mock
 
 import pytest
+import python_http_client
 import sendgrid
 from sendgrid.helpers.mail import attachment
 
@@ -607,6 +608,60 @@ class TestSendGridHandlerWhole:
         with pytest.warns(UserWarning, match='To/From address settings exist but are empty. No emails sent.'):
             sendgrid_handler.send_message(message_details)
             recipient_mock.assert_not_called()
+
+    def test_send_message_full_integration_catches_400_bad_request(self, mocker):
+
+        # sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
+
+        distribution_Mock = mocker.Mock()
+        distribution_Mock.version = 3.14
+        distributions = [distribution_Mock]
+        mocker.patch('pkg_resources.require', return_value=distributions)
+
+        sendgrid_settings = {
+            'from_address': 'foo@example.com',
+            'to_addresses': 'cheddar@example.com',
+            'api_key': 'itsasecret',
+        }
+
+        message_details = models.MessageDetails()
+        message_details.message = 'This is a\nmulti-line\nmessage'
+
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler.sendgrid_client = mocker.Mock()
+        sendgrid_handler.sendgrid_client.client.mail.send.post.side_effect = python_http_client.BadRequestsError(
+            400, 'HTTP Error 400: Bad Request', 'body', 'header'
+        )
+
+        with pytest.warns(
+            UserWarning, match='SendGrid error 400, might be missing a required Mail component; no e-mail sent.'
+        ):
+            sendgrid_handler.send_message(message_details)
+
+    def test_send_message_full_integration_catches_401_unauthorized(self, mocker):
+
+        distribution_Mock = mocker.Mock()
+        distribution_Mock.version = 3.14
+        distributions = [distribution_Mock]
+        mocker.patch('pkg_resources.require', return_value=distributions)
+
+        sendgrid_settings = {
+            'from_address': 'foo@example.com',
+            'to_addresses': 'cheddar@example.com',
+            'api_key': 'itsasecret',
+        }
+
+        message_details = models.MessageDetails()
+        message_details.message = 'This is a\nmulti-line\nmessage'
+
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler.sendgrid_client = mocker.Mock()
+        sendgrid_handler.sendgrid_client.client.mail.send.post.side_effect = python_http_client.UnauthorizedError(
+            401, 'HTTP Error 401: Unauthorized', 'body', 'header'
+        )
+
+        with pytest.warns(UserWarning, match='SendGrid error 401: Unauthorized. Check API key.'):
+            sendgrid_handler.send_message(message_details)
 
     def test_send_message_full_integration_with_version(self, mocker):
 
