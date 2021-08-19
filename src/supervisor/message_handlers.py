@@ -229,7 +229,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
                 warnings.warn('SendGrid error 400, might be missing a required Mail component; no e-mail sent.')
             else:
                 raise e
-        except python_http_client.UnauthorizedError as e:
+        except python_http_client.UnauthorizedError as e:  # pylint: disable=invalid-name
             if 'HTTP Error 401: Unauthorized' in str(e):
                 warnings.warn('SendGrid error 401: Unauthorized. Check API key.')
             else:
