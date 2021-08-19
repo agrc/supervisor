@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='agrc-supervisor',
-    version='1.2.0',
+    version='2.0.0',
     license='MIT',
     description='A watchdog module for scheduled scripts that sends notifications, including any uncaught exceptions.',
     author='Jake Adams, AGRC',
