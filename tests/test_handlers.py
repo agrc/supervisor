@@ -610,9 +610,6 @@ class TestSendGridHandlerWhole:
             recipient_mock.assert_not_called()
 
     def test_send_message_full_integration_catches_400_bad_request(self, mocker):
-
-        # sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
-
         distribution_Mock = mocker.Mock()
         distribution_Mock.version = 3.14
         distributions = [distribution_Mock]
@@ -680,7 +677,6 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        # message_details.project_name = 'ProFoo'
 
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
 
@@ -714,7 +710,6 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        # message_details.project_name = 'ProFoo'
         message_details.attachments = [temp_a]
 
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
@@ -753,7 +748,6 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        # message_details.project_name = 'ProFoo'
         message_details.attachments = [dir_to_be_attached]
 
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
@@ -796,7 +790,6 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        # message_details.project_name = 'ProFoo'
         message_details.attachments = [dir_to_be_attached, single_file]
 
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
@@ -841,7 +834,6 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        # message_details.project_name = 'ProFoo'
         message_details.attachments = [single_file, dir_to_be_attached]
 
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
@@ -876,7 +868,6 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        # message_details.project_name = 'ProFoo'
         message_details.attachments = [bad_file]
 
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
@@ -908,7 +899,6 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        # message_details.project_name = 'ProFoo'
         message_details.attachments = [3]
 
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
@@ -943,7 +933,6 @@ class TestSendGridHandlerWhole:
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
-        # message_details.project_name = 'ProFoo'
         message_details.attachments = [good_file, 3]
 
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
