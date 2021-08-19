@@ -1,5 +1,6 @@
 import sys
 import types
+from pathlib import Path
 
 from supervisor import message_handlers, models
 
@@ -53,3 +54,46 @@ def test_add_message_handler(mocker):
 
     assert len(sim_sup.message_handlers) == 1
     assert sim_sup.message_handlers[-1] == handler_mock
+
+
+class TestMesssageDetails:
+
+    def test_attachments_single_str(self, mocker):
+
+        message = models.MessageDetails()
+        message.attachments = r'c:\temp\foo.bar'
+
+        assert message.attachments == [r'c:\temp\foo.bar']
+
+    def test_attachments_single_Path(self, mocker):
+
+        message = models.MessageDetails()
+        message.attachments = Path(r'c:\temp\foo.bar')
+
+        assert message.attachments == [Path(r'c:\temp\foo.bar')]
+
+    def test_attachments_list_of_strs(self, mocker):
+
+        message = models.MessageDetails()
+        message.attachments = [r'c:\temp\foo.bar', r'c:\temp\bar.baz']
+
+        assert message.attachments == [r'c:\temp\foo.bar', r'c:\temp\bar.baz']
+
+    def test_attachments_list_of_Paths(self, mocker):
+
+        message = models.MessageDetails()
+        message.attachments = [Path(r'c:\temp\foo.bar'), Path(r'c:\temp\bar.baz')]
+
+        assert message.attachments == [Path(r'c:\temp\foo.bar'), Path(r'c:\temp\bar.baz')]
+
+    def test_attachments_mixed_list(self, mocker):
+        message = models.MessageDetails()
+        message.attachments = [r'c:\temp\foo.bar', Path(r'c:\temp\bar.baz')]
+
+        assert message.attachments == [r'c:\temp\foo.bar', Path(r'c:\temp\bar.baz')]
+
+    def test_attachment_empty_list(self, mocker):
+        message = models.MessageDetails()
+        message.attachments = []
+
+        assert message.attachments == []

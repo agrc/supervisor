@@ -14,8 +14,6 @@ class Supervisor:
 
     Attributes
     ----------
-    project_name : str
-        The name of the client project using Supervisor; used to report version in global exception handler messages
     message_handlers : [MessageHandler]
         Notifications will be sent via all handlers in this list
     logger : Logger
@@ -33,10 +31,9 @@ class Supervisor:
         Closure around a replacement for sys.excepthook
     """
 
-    def __init__(self, project_name, logger=None, log_path=None):
+    def __init__(self, logger=None, log_path=None):
 
         #: Set up our list of MessageHandlers
-        self.project_name = project_name
         self.message_handlers = []
         self.logger = logger
         self.log_path = log_path
@@ -94,7 +91,6 @@ class Supervisor:
             message_details.message = error
             message_details.subject = 'ERROR'
             message_details.attachments = [self.log_path]
-            message_details.project_name = self.project_name
             self.notify(message_details)
 
         return global_exception_handler
@@ -111,14 +107,28 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
         Strings or Paths to any attachments, including log files
     subject : str
         The message subject
-    project_name : str
-        The name of the project that has added the Supervisor object. Used for adding the version to notifications.
 
     TODO: Implement true Null-Object pattern.
     """
 
     def __init__(self):
         self.message = ''
-        self.attachments = []  #: Strings or Paths
+        self._attachments = []  #: Strings or Paths
         self.subject = ''
-        self.project_name = ''
+
+    @property
+    def attachments(self):
+        """List of paths of files to attach
+
+        Returns:
+            List: Attachment paths
+        """
+        return self._attachments
+
+    @attachments.setter
+    def attachments(self, value):
+        if isinstance(value, list):
+            self._attachments.extend(value)
+
+        else:
+            self._attachments.append(value)

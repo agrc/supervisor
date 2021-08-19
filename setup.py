@@ -33,7 +33,8 @@ setup(
     },
     keywords=['gis'],
     install_requires=[
-        'requests',
+        'requests==2.25.*',
+        'sendgrid==6.7.*',
     ],
     extras_require={
         'tests': [
@@ -42,7 +43,7 @@ setup(
             'pytest-cov==2.9.*',
             'pytest-instafail==0.4.*',
             'pytest-isort==1.0.*',
-            'pytest-mock',
+            'pytest-mock==3.4.*',
             'pytest-pylint==0.17.*',
             'pytest-watch==4.2.*',
             'pytest==5.4.*',

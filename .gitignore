@@ -30,3 +30,6 @@ __pycache__
 .DS_Store
 cov.xml
 .coverage
+
+src/supervisor/secrets.py
+.vscode/.ropeproject/config.py
