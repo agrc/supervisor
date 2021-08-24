@@ -224,16 +224,16 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         mail.attachment = attachments
         try:
             self.sendgrid_client.client.mail.send.post(request_body=mail.get())
-        except python_http_client.BadRequestsError as e:  # pylint: disable=invalid-name
-            if 'HTTP Error 400: Bad Request' in str(e):
+        except python_http_client.BadRequestsError as err:
+            if 'HTTP Error 400: Bad Request' in str(err):
                 warnings.warn('SendGrid error 400, might be missing a required Mail component; no e-mail sent.')
             else:
-                raise e
-        except python_http_client.UnauthorizedError as e:  # pylint: disable=invalid-name
-            if 'HTTP Error 401: Unauthorized' in str(e):
+                raise err
+        except python_http_client.UnauthorizedError as err:
+            if 'HTTP Error 401: Unauthorized' in str(err):
                 warnings.warn('SendGrid error 401: Unauthorized. Check API key.')
             else:
-                raise e
+                raise err
 
     def _verify_addresses(self):
         """Make sure from/to address keys exist and are not empty
@@ -330,8 +330,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
                     error_message += f'* Attachment "{attachment}" does not exist\n'
                     continue
                 good_attachments.append(attachment)
-            except TypeError as e:  # pylint: disable=invalid-name
-                if 'expected str, bytes or os.PathLike object, not' in str(e):
+            except TypeError as err:
+                if 'expected str, bytes or os.PathLike object, not' in str(err):
                     error_message += f'* Cannot get Path() of attachment "{attachment}"\n'
 
         if error_message:
