@@ -25,7 +25,8 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
 1. Install supervisor (or add to your project's `setup.py`)
    - `pip install agrc-supervisor`
 1. In your script's entry point code (usually `main.py`), as early as possible and generally before any arg parsing:
-   - Instantiate a `Supervisor` object, passing an existing logger to log any errors.
+   - (Optional) Set up a logger, which is used to log any errors your code doesn't handle and `Supervisor` catches.
+   - Instantiate a `Supervisor` object, passing the optional logger.
    - Instantiate and register the desired `MessageHandler`s with the `Supervisor Object`
       - Create the appropriate settings dictionaries before creating the `MessageHandler`s
 1. Build a `MessageDetails` object with subject, message (as a single string), and optional attachments.
@@ -38,9 +39,15 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
 ## Example Code
 
 ```python
+import logging
+from logging.handlers import RotatingFileHandler
 
 from supervisor.message_handlers import ConsoleHandler, SendGridHandler
 from supervisor.models import MessageDetails, Supervisor
+
+my_logger = logging.getLogger('my_project')
+log_handler = RotatingFileHandler(r'c:\log.log'), backupCount=10)
+my_logger.addHandler(log_handler)
 
 supervisor = Supervisor(logger=my_logger, log_path=r'c:\log.log')
 sendgrid_settings = {
