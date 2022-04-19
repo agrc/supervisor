@@ -25,14 +25,35 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
 1. Install supervisor (or add to your project's `setup.py`)
    - `pip install agrc-supervisor`
 1. In your script's entry point code (usually `main.py`), as early as possible and generally before any arg parsing:
-   - Instantiate a `Supervisor` object
+   - Instantiate a `Supervisor` object, passing an existing logger to log any errors.
    - Instantiate and register the desired `MessageHandler`s with the `Supervisor Object`
       - Create the appropriate settings dictionaries before creating the `MessageHandler`s
-1. Call `.notify()` on the `Supervisor` object after your business logic:
-   - In `main.py` (or wherever you instantiated the `Supervisor` object), passing the message and path to the log file
+1. Build a `MessageDetails` object with subject, message (as a single string), and optional attachments.
+1. Call `.notify()` on the `Supervisor`:
+   - In `main.py` (or wherever you instantiated the `Supervisor` object), passing in the MessageDetails object
    - —OR—
-   - Elsewhere in your business logic, having passed your `Supervisor` object through your logic as needed.
+   - Elsewhere in your business logic, having passed your `Supervisor` object through your logic and building `MessageDetail` objects as needed.
 1. After instantiation, the `Supervisor` object will direct all errors to its custom error handler. This will send messages to every registered handler whenever an error occurs.
+
+## Example Code
+
+```python
+
+supervisor = Supervisor(logger=my_logger, log_path=secrets.LOG_PATH)
+supervisor.add_message_handler(
+   SendGridHandler(sendgrid_settings=secrets.SENDGRID_SETTINGS, project_name='my_project')
+)
+
+#: Do your stuff here...
+outcome = my_project.do_things()
+
+summary_message = MessageDetails()
+summary_message.subject = 'my_project Update Summary'
+summary_message.message = '\n'.join([f'my_project run at {time}', f'Outcome: {outcome}'])
+summary_message.attachments = secrets.LOG_PATH
+
+supervisor.notify(summary_message)
+```
 
 ## Development Environment
 
