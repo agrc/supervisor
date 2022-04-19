@@ -36,7 +36,7 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
    - Elsewhere in your business logic, having passed your `Supervisor` object through your logic and building `MessageDetail` objects as needed.
 1. After instantiation, the `Supervisor` object will direct all errors to its custom error handler. This will send messages to every registered handler whenever an error occurs.
 
-## Example Code
+### Example Code
 
 ```python
 import logging
@@ -68,6 +68,12 @@ summary_message.attachments = r'c:\log.log'
 
 supervisor.notify(summary_message)
 ```
+
+### What's the Relationship Between Supervisor and logging?
+
+supervisor borrows a lot of language from logging, but it is not meant to replace logging. It provides a way to send messages via multiple handlers with a single message format and method call. Depending on the handler, these messages can have attachments, which is an excelent way to to include a log file that's been written to disk.
+
+supervisor's error handler catches all errors that your code doesn't handle. If you pass a logger when instantiating your Supervisor object, they get logged at level `ERROR` in addition to the default of sending them to all the registered supervisor handlers. This allows you to record the errors on disk or in cloud logging.
 
 ## Development Environment
 
