@@ -39,18 +39,25 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
 
 ```python
 
-supervisor = Supervisor(logger=my_logger, log_path=secrets.LOG_PATH)
-supervisor.add_message_handler(
-   SendGridHandler(sendgrid_settings=secrets.SENDGRID_SETTINGS, project_name='my_project')
-)
+from supervisor.message_handlers import ConsoleHandler, SendGridHandler
+from supervisor.models import MessageDetails, Supervisor
+
+supervisor = Supervisor(logger=my_logger, log_path=r'c:\log.log')
+sendgrid_settings = {
+   'from_address': 'me@utah.gov',
+   'to_address': 'you@utah.gov',
+   'api_key': 'its_a_secret!',
+}
+supervisor.add_message_handler(SendGridHandler(sendgrid_settings=sendgrid_settings, project_name='my_project'))
+supervisor.add_message_handler(ConsoleHandler())
 
 #: Do your stuff here...
 outcome = my_project.do_things()
 
 summary_message = MessageDetails()
 summary_message.subject = 'my_project Update Summary'
-summary_message.message = '\n'.join([f'my_project run at {time}', f'Outcome: {outcome}'])
-summary_message.attachments = secrets.LOG_PATH
+summary_message.message = '\n'.join([f'my_project run at {datetime.datetime.now()}', f'Outcome: {outcome}'])
+summary_message.attachments = r'c:\log.log'
 
 supervisor.notify(summary_message)
 ```
