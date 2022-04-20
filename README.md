@@ -71,7 +71,7 @@ supervisor.notify(summary_message)
 
 ### What's the Relationship Between Supervisor and logging?
 
-supervisor borrows a lot of language from logging, but it is not meant to replace logging. It provides a way to send messages via multiple handlers with a single message format and method call. Depending on the handler, these messages can have attachments, which is an excelent way to to include a log file that's been written to disk.
+supervisor borrows a lot of language from logging, but it is not meant to replace logging. It provides a way to send messages via multiple handlers with a single message format and method call. Depending on the handler, these messages can have attachments, which is an excellent way to to include a log file that's been written to disk.
 
 supervisor's error handler catches all errors that your code doesn't handle. If you pass a logger when instantiating your Supervisor object, they get logged at level `ERROR` in addition to the default of sending them to all the registered supervisor handlers. This allows you to record the errors on disk or in cloud logging.
 
