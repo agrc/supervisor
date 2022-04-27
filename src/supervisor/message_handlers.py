@@ -61,7 +61,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         gzip input_path into a MIMEApplication object
     """
 
-    def __init__(self, email_settings, client_name='', client_version=''):
+    def __init__(self, email_settings, client_name='unknown client', client_version='not specified'):
         self.email_settings = email_settings
         self.client_name = client_name
         self.client_version = client_version
