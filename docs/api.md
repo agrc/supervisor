@@ -76,7 +76,7 @@ Relies on the `email_settings` parameter to set up the outgoing server settings.
 
 Optionally supports the `prefix` key in `email_settings`, which is a string that will be prepended to the message's subject line. You can use `socket.gethostname()` to include the current hostname.
 
-Optionally relies on the `project_name` parameter to report the client program's name and version number in the email.
+Optionally relies on the `client_name` and `client_version` parameters to report the client program's name and version number in the email.
 
 ### Supported MessageDetail Attributes
 
@@ -105,7 +105,7 @@ Relies on the `sendgrid_settings` parameter to set up the outgoing server settin
 
 Optionally supports the `prefix` key in `sendgrid_settings`, which is a string that will be prepended to the message's subject line. You can use `socket.gethostname()` to include the current hostname.
 
-Optionally relies on the `project_name` parameter to report the client program's name and version number in the email.
+Optionally relies on the `client_name` and `client_version` parameters to report the client program's name and version number in the email.
 
 ### Supported MessageDetail Attributes
 
