@@ -57,7 +57,7 @@ sendgrid_settings = {
    'to_address': 'you@utah.gov',
    'api_key': 'its_a_secret!',
 }
-supervisor.add_message_handler(SendGridHandler(sendgrid_settings=sendgrid_settings, project_name='my_project'))
+supervisor.add_message_handler(SendGridHandler(sendgrid_settings=sendgrid_settings, project_name='my_project', project_version='1.5.0'))
 supervisor.add_message_handler(ConsoleHandler())
 
 #: Do your stuff here...

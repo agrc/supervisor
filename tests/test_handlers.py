@@ -28,11 +28,6 @@ def test_console_handler_prints(mocker, capsys):
 
 def test_build_message_without_attachments(mocker):
 
-    distribution_Mock = mocker.Mock()
-    distribution_Mock.version = 0
-    distributions = [distribution_Mock]
-    mocker.patch('pkg_resources.require', return_value=distributions)
-
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
@@ -42,7 +37,8 @@ def test_build_message_without_attachments(mocker):
         'to_addresses': 'foo@example.com',
         'from_address': 'testing@example.com',
     }
-    handler_mock.project_name = 'testing'
+    handler_mock.client_name = 'testing'
+    handler_mock.client_version = 0
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -55,11 +51,6 @@ def test_build_message_without_attachments(mocker):
 
 def test_build_message_with_None_attachment(mocker):
 
-    distribution_Mock = mocker.Mock()
-    distribution_Mock.version = 0
-    distributions = [distribution_Mock]
-    mocker.patch('pkg_resources.require', return_value=distributions)
-
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
@@ -70,7 +61,8 @@ def test_build_message_with_None_attachment(mocker):
         'to_addresses': 'foo@example.com',
         'from_address': 'testing@example.com',
     }
-    handler_mock.project_name = 'testing'
+    handler_mock.client_name = 'testing'
+    handler_mock.client_version = 0
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -83,11 +75,6 @@ def test_build_message_with_None_attachment(mocker):
 
 def test_build_message_with_empty_str_attachment_path(mocker):
 
-    distribution_Mock = mocker.Mock()
-    distribution_Mock.version = 0
-    distributions = [distribution_Mock]
-    mocker.patch('pkg_resources.require', return_value=distributions)
-
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
@@ -98,7 +85,8 @@ def test_build_message_with_empty_str_attachment_path(mocker):
         'to_addresses': 'foo@example.com',
         'from_address': 'testing@example.com',
     }
-    handler_mock.project_name = 'testing'
+    handler_mock.client_name = 'testing'
+    handler_mock.client_version = 0
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -111,11 +99,6 @@ def test_build_message_with_empty_str_attachment_path(mocker):
 
 def test_build_message_with_subject_prefix(mocker):
 
-    distribution_Mock = mocker.Mock()
-    distribution_Mock.version = 0
-    distributions = [distribution_Mock]
-    mocker.patch('pkg_resources.require', return_value=distributions)
-
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
@@ -126,7 +109,8 @@ def test_build_message_with_subject_prefix(mocker):
         'from_address': 'testing@example.com',
         'prefix': 'test prefix: ',
     }
-    handler_mock.project_name = 'testing'
+    handler_mock.client_name = 'testing'
+    handler_mock.client_version = 0
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -138,12 +122,6 @@ def test_build_message_with_subject_prefix(mocker):
 
 
 def test_build_message_with_multiple_to_addresses(mocker):
-
-    distribution_Mock = mocker.Mock()
-    distribution_Mock.version = 0
-    distributions = [distribution_Mock]
-    mocker.patch('pkg_resources.require', return_value=distributions)
-
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
@@ -153,7 +131,8 @@ def test_build_message_with_multiple_to_addresses(mocker):
         'to_addresses': ['foo@example.com', 'bar@example.com', 'baz@example.com'],
         'from_address': 'testing@example.com',
     }
-    handler_mock.project_name = 'testing'
+    handler_mock.client_name = 'testing'
+    handler_mock.client_version = 0
 
     test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
@@ -483,32 +462,16 @@ class TestSendGridHandlerParts:
         assert subject == 'Bar Prefix—Foo Subject'
 
     def test_build_content_with_version(self, mocker):
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 0
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
 
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmessage with newlines'
-        message_details.project_name = 'ProFoo'
+        client_name = 'ProFoo'
+        client_version = 0
 
         content_object = message_handlers.SendGridHandler._build_content(
-            message_details.message, message_details.project_name
+            message_details.message, client_name, client_version
         )
         assert content_object.content == 'This is a\nmessage with newlines\n\nProFoo version: 0'
-        assert content_object.mime_type == 'text/plain'
-
-    def test_build_content_without_version(self, mocker):
-        mocker.patch('pkg_resources.require', return_value=[])
-
-        message_details = models.MessageDetails()
-        message_details.message = 'This is a\nmessage with newlines'
-        message_details.project_name = 'ProFoo'
-
-        content_object = message_handlers.SendGridHandler._build_content(
-            message_details.message, message_details.project_name
-        )
-        assert content_object.content == 'This is a\nmessage with newlines'
         assert content_object.mime_type == 'text/plain'
 
     def test_verify_attachments_bad_Path_input(self, mocker):
@@ -712,11 +675,6 @@ class TestSendGridHandlerWhole:
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
 
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
-
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
@@ -726,7 +684,7 @@ class TestSendGridHandlerWhole:
         message_details = models.MessageDetails()
         message_details.message = 'This is a\nmulti-line\nmessage'
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo', '3.14')
 
         sendgrid_handler.send_message(message_details)
 
@@ -740,11 +698,6 @@ class TestSendGridHandlerWhole:
     def test_send_message_full_integration_with_single_file_attachment(self, mocker, tmp_path):
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
-
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
 
         sendgrid_settings = {
             'from_address': 'foo@example.com',
@@ -760,7 +713,7 @@ class TestSendGridHandlerWhole:
         message_details.message = 'This is a\nmulti-line\nmessage'
         message_details.attachments = [temp_a]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo', '3.14')
 
         sendgrid_handler.send_message(message_details)
 
@@ -774,11 +727,6 @@ class TestSendGridHandlerWhole:
     def test_send_message_full_integration_with_directory_attachment(self, mocker, tmp_path):
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
-
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
 
         sendgrid_settings = {
             'from_address': 'foo@example.com',
@@ -798,7 +746,7 @@ class TestSendGridHandlerWhole:
         message_details.message = 'This is a\nmulti-line\nmessage'
         message_details.attachments = [dir_to_be_attached]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo', '3.14')
 
         sendgrid_handler.send_message(message_details)
 
@@ -812,11 +760,6 @@ class TestSendGridHandlerWhole:
     def test_send_message_full_integration_with_directory_and_single_file_attachments(self, mocker, tmp_path):
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
-
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
 
         sendgrid_settings = {
             'from_address': 'foo@example.com',
@@ -840,7 +783,7 @@ class TestSendGridHandlerWhole:
         message_details.message = 'This is a\nmulti-line\nmessage'
         message_details.attachments = [dir_to_be_attached, single_file]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo', '3.14')
 
         sendgrid_handler.send_message(message_details)
 
@@ -856,11 +799,6 @@ class TestSendGridHandlerWhole:
     def test_send_message_full_integration_with_single_file_and_directory_attachments(self, mocker, tmp_path):
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
-
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
 
         sendgrid_settings = {
             'from_address': 'foo@example.com',
@@ -884,7 +822,7 @@ class TestSendGridHandlerWhole:
         message_details.message = 'This is a\nmulti-line\nmessage'
         message_details.attachments = [single_file, dir_to_be_attached]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo', '3.14')
 
         sendgrid_handler.send_message(message_details)
 
@@ -901,11 +839,6 @@ class TestSendGridHandlerWhole:
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
 
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
-
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
@@ -918,7 +851,7 @@ class TestSendGridHandlerWhole:
         message_details.message = 'This is a\nmulti-line\nmessage'
         message_details.attachments = [bad_file]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo', '3.14')
 
         sendgrid_handler.send_message(message_details)
 
@@ -934,11 +867,6 @@ class TestSendGridHandlerWhole:
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
 
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
-
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
@@ -949,7 +877,7 @@ class TestSendGridHandlerWhole:
         message_details.message = 'This is a\nmulti-line\nmessage'
         message_details.attachments = [3]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo', '3.14')
 
         sendgrid_handler.send_message(message_details)
 
@@ -965,11 +893,6 @@ class TestSendGridHandlerWhole:
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
 
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch('pkg_resources.require', return_value=distributions)
-
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
@@ -983,7 +906,7 @@ class TestSendGridHandlerWhole:
         message_details.message = 'This is a\nmulti-line\nmessage'
         message_details.attachments = [good_file, 3]
 
-        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo')
+        sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings, 'ProFoo', '3.14')
 
         sendgrid_handler.send_message(message_details)
 

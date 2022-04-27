@@ -16,7 +16,6 @@ from smtplib import SMTP
 from tempfile import TemporaryDirectory
 from zipfile import ZIP_DEFLATED, ZipFile
 
-import pkg_resources
 import python_http_client
 import sendgrid
 from sendgrid.helpers.mail import Attachment, Content, Email, FileContent, FileName, FileType, Mail, To
@@ -62,9 +61,10 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         gzip input_path into a MIMEApplication object
     """
 
-    def __init__(self, email_settings, project_name=''):
+    def __init__(self, email_settings, client_name='', client_version=''):
         self.email_settings = email_settings
-        self.project_name = project_name
+        self.client_name = client_name
+        self.client_version = client_version
 
     def send_message(self, message_details):
         """Build a message, create an SMTP object, and send the message
@@ -115,12 +115,8 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         message = MIMEMultipart()
         message.attach(MIMEText(message_details.message, 'html'))
 
-        #: Get the client's version (assuming client has been installed via pip install and setup.py)
-        distributions = pkg_resources.require(self.project_name)
-        if distributions:
-            version = distributions[0].version
-            version = MIMEText(f'<p>{self.project_name} version: {version}</p>', 'html')
-            message.attach(version)
+        version = MIMEText(f'<p>{self.client_name} version: {self.client_version}</p>', 'html')
+        message.attach(version)
 
         #: Split recipient addresses if needed.
         to_addresses = self.email_settings['to_addresses']
@@ -182,8 +178,10 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         'from_address' (str)
         'to_addresses' (str or List): single string or list of strings
         'api_key' (str): SendGrid api key
-    project_name : str
-        pip-install name of the client project for client version number reporting
+    client_name : str (optional, default='unknown client')
+        name of the client project for email body
+    client_version : str (optional, default='not specified')
+        client project's version for email body
 
     Methods
     -------
@@ -191,10 +189,11 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Build a message and send using the SendGrid API's helper classes
     """
 
-    def __init__(self, sendgrid_settings, project_name=''):
+    def __init__(self, sendgrid_settings, client_name='unknown client', client_version='not specified'):
         self.sendgrid_settings = sendgrid_settings
         self.sendgrid_client = sendgrid.SendGridAPIClient(api_key=self.sendgrid_settings['api_key'])
-        self.project_name = project_name
+        self.client_name = client_name
+        self.client_version = client_version
 
     def send_message(self, message_details):
         """Construct and send an email message with the SendGrid API
@@ -216,7 +215,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         subject = self._build_subject(message_details)
         attachment_warning, verified_attachments = self._verify_attachments(message_details.attachments)
         new_message = attachment_warning + message_details.message
-        content = self._build_content(new_message, self.project_name)
+        content = self._build_content(new_message, self.client_name, self.client_version)
         attachments = self._process_attachments(verified_attachments)
 
         #: Build message object and send it
@@ -290,7 +289,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         return subject
 
     @staticmethod
-    def _build_content(message, project_name):
+    def _build_content(message, client_name, client_version):
         """Add client version if desired and package into plaintext Content object
 
         Args:
@@ -301,12 +300,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             Content: Content of email as a SendGrid Content object
         """
 
-        #: Get the client's version (assuming client has been installed via pip install and setup.py)
-        distributions = pkg_resources.require(project_name)
-        if distributions:
-            version = distributions[0].version
-            version = f'\n\n{project_name} version: {version}'
-            message += version
+        client_version = f'\n\n{client_name} version: {client_version}'
+        message += client_version
 
         return Content('text/plain', message)
 
