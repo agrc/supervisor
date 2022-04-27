@@ -7,9 +7,9 @@ A module for watching over scheduled processes: catching errors and sending mess
 
 ## Rationale
 
-supervisor provides a framework for scripts scheduled through Windows' Task Scheduler to send messages via the handlers in `message_handlers.py`. The messages can include gziped log files, progress reports, or execution summaries. The message handlers provide access to email, slack, and any other custom handler. These reporting methods are not supported by Task Scheduler. It also sends any uncaught exceptions via the registered message handlers.
+supervisor provides a framework for scripts scheduled through Windows' Task Scheduler to send messages via the handlers in `message_handlers.py`. The messages can include gziped log files, progress reports, or execution summaries. The message handlers provide access to channels not supported by Task Scheduler like email, slack, and any other custom handler. It also can send any uncaught exceptions via the registered message handlers if desired.
 
-- Redirects exception handling to a custom handler
+- Optionally redirects exception handling to a custom handler that sends notifications through multiple channels.
 - Provides custom messaging handler to direct errors and any other end-of-script output to e-mail and (eventually) Slack
   - Works with any SMTP server supported by Python's `smtp` library
   - Works with the SendGrid email API
@@ -26,7 +26,9 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
    - `pip install agrc-supervisor`
 1. In your script's entry point code (usually `main.py`), as early as possible and generally before any arg parsing:
    - (Optional) Set up a logger, which is used to log any errors your code doesn't handle and `Supervisor` catches.
-   - Instantiate a `Supervisor` object, passing the optional logger.
+   - Instantiate a `Supervisor` object.
+      - The default behavior replaces the normal exception handler. If you are using logging, pass a logger to ensure the exceptions get logged there.
+      - If you don't want Supervisor to handle exceptions, pass `handle_errors=False` when instantiating.
    - Instantiate and register the desired `MessageHandler`s with the `Supervisor Object`
       - Create the appropriate settings dictionaries before creating the `MessageHandler`s
 1. Build a `MessageDetails` object with subject, message (as a single string), and optional attachments.
@@ -34,7 +36,7 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
    - In `main.py` (or wherever you instantiated the `Supervisor` object), passing in the MessageDetails object
    - —OR—
    - Elsewhere in your business logic, having passed your `Supervisor` object through your logic and building `MessageDetail` objects as needed.
-1. After instantiation, the `Supervisor` object will direct all errors to its custom error handler. This will send messages to every registered handler whenever an error occurs.
+1. If Supervisor is handling errors, the `Supervisor` object will direct all errors that occur after it is instantiated to its custom error handler. This will send messages to every registered handler whenever an error occurs.
 
 ### Example Code
 
@@ -49,7 +51,7 @@ my_logger = logging.getLogger('my_project')
 log_handler = RotatingFileHandler(r'c:\log.log'), backupCount=10)
 my_logger.addHandler(log_handler)
 
-supervisor = Supervisor(logger=my_logger, log_path=r'c:\log.log')
+supervisor = Supervisor(handle_errors=True, logger=my_logger, log_path=r'c:\log.log')
 sendgrid_settings = {
    'from_address': 'me@utah.gov',
    'to_address': 'you@utah.gov',
@@ -73,7 +75,7 @@ supervisor.notify(summary_message)
 
 supervisor borrows a lot of language from logging, but it is not meant to replace logging. It provides a way to send messages via multiple handlers with a single message format and method call. Depending on the handler, these messages can have attachments, which is an excellent way to to include a log file that's been written to disk.
 
-supervisor's error handler catches all errors that your code doesn't handle. If you pass a logger when instantiating your Supervisor object, they get logged at level `ERROR` in addition to the default of sending them to all the registered supervisor handlers. This allows you to record the errors on disk or in cloud logging.
+supervisor's error handler will catch all errors that your code doesn't handle. If you pass a logger when instantiating your Supervisor object, they get logged at level `ERROR` in addition to the default of sending them to all the registered supervisor handlers. This allows you to record the errors on disk or in cloud logging.
 
 ## Development Environment
 

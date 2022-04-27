@@ -4,7 +4,7 @@
 
 `models.Supervisor`
 
-The Supervisor is the main object used to coordinate messaging and error handling. Implemented as a singleton.
+The Supervisor is the main object used to coordinate messaging and error handling. Informally implemented as a singleton.
 
 ### Attributes
 
@@ -21,7 +21,9 @@ The Supervisor is the main object used to coordinate messaging and error handlin
 
 #### Instantiation
 
-You'll instantiate a single Supervisor object to handle messaging and exceptions for the client program (whatever program you're wanting to automate through Windows Task Scheduler).
+You'll instantiate a single Supervisor object to handle messaging and (optionally) exceptions for the client program (whatever program you're wanting to automate through Windows Task Scheduler).
+
+By default, the Supervisor object will replace the built-in exception handler with one that sends a notification through the registered message handlers. If you don't want this behavior, pass `handle_error=False` when you instantiate the object.
 
 The optional logging arguments on the constructor can be used by the exception handler. The `logger` will be used to log any errors caught by the exception handler. `log_path` can be added as an attachment to any exception messages sent by the registered `MessageHandlers`.
 
