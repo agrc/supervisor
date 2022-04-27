@@ -34,5 +34,4 @@
   "python.testing.nosetestsEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
-  "python.pythonPath": "C:\\Users\\jdadams\\Miniconda3\\envs\\supervisor\\python.exe"
 }
