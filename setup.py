@@ -9,9 +9,13 @@ from os.path import basename, splitext
 
 from setuptools import find_packages, setup
 
+version = {}
+with open('src/supervisor/version.py', encoding='utf-8') as fp:
+    exec(fp.read(), version)
+
 setup(
     name='agrc-supervisor',
-    version='2.0.0',
+    version=version['__version__'],
     license='MIT',
     description='A watchdog module for scheduled scripts that sends notifications, including any uncaught exceptions.',
     author='Jake Adams, AGRC',
