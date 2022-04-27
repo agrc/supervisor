@@ -31,15 +31,16 @@ class Supervisor:
         Closure around a replacement for sys.excepthook
     """
 
-    def __init__(self, logger=None, log_path=None):
+    def __init__(self, handle_errors=True, logger=None, log_path=None):
 
         #: Set up our list of MessageHandlers
         self.message_handlers = []
         self.logger = logger
         self.log_path = log_path
 
-        #: Catch any uncaught exception with our custom exception handler
-        sys.excepthook = self._manage_exceptions()
+        #: Catch any uncaught exception with our custom exception handler if desired
+        if handle_errors:
+            sys.excepthook = self._manage_exceptions()
 
     def add_message_handler(self, handler: MessageHandler):
         """Register a new handler for sending messages
