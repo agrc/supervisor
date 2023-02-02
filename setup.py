@@ -37,21 +37,21 @@ setup(
     },
     keywords=['gis'],
     install_requires=[
-        'requests==2.25.*',
-        'sendgrid==6.7.*',
+        'requests==2.28.*',
+        'sendgrid==6.9.*',
     ],
     extras_require={
         'tests': [
             'pylint-quotes==0.2.*',
-            'pylint==2.5.*',
-            'pytest-cov==2.9.*',
+            'pylint==2.16.*',
+            'pytest-cov==4.*',
             'pytest-instafail==0.4.*',
-            'pytest-isort==1.0.*',
-            'pytest-mock==3.4.*',
-            'pytest-pylint==0.17.*',
+            'pytest-isort==3.1.*',
+            'pytest-mock==3.10.*',
+            'pytest-pylint==0.19.*',
             'pytest-watch==4.2.*',
-            'pytest==5.4.*',
-            'yapf==0.30.*',
+            'pytest==7.2.*',
+            'yapf==0.32.*',
         ]
     },
     setup_requires=[

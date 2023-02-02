@@ -17,7 +17,7 @@ from supervisor.models import MessageDetails, Supervisor
 if __name__ == '__main__':
 
     #: Set up a rotating file handler for the report log
-    test_path = Path(r'c:\temp\supervisor_log.txt')
+    test_path = Path(r'd:\temp\supervisor_log.txt')
     test_logger = logging.getLogger('supervisor')
     test_handler = logging.handlers.RotatingFileHandler(test_path, backupCount=2)
     test_handler.doRollover()  #: Rotate the log on each run
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     }
 
     #: Instantiate a new EmailHandler and register it with our Supervisor
-    sim_sup.add_message_handler(EmailHandler(email_settings, 'agrc-supervisor'))
+    # sim_sup.add_message_handler(EmailHandler(email_settings, 'agrc-supervisor'))
 
     #: ===============
     #: SendGridHandler
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     message = MessageDetails()
     message.subject = '[Supervisor Example]'
     message.message = 'This is an example message\nwith a newline\nor two.'
-    message.attachments = [r'c:\temp\agol_items_by_user', r'c:\temp\schools.csv']
+    message.attachments = [r'd:\temp\agol_items_by_user', r'd:\temp\schools.csv']
     sim_sup.notify(message)
 
     #: Trigger Supervisor's error handler
