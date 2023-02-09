@@ -89,6 +89,8 @@ supervisor's error handler will catch all errors that your code doesn't handle. 
 
 ## Update pypi
 
+**Make sure there are no secrets stored anywhere in the source tree, including files in .gitignore**
+
 1. Delete everything in `dist/`
 1. Make sure you've updated the version number in `setup.py`
 1. Recreate the wheels:
