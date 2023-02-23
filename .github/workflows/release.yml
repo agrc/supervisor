@@ -3,6 +3,9 @@ on:
   release:
     types: [published]
 
+env:
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   publish:
     name: Build and Publish
