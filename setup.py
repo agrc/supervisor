@@ -43,7 +43,7 @@ setup(
     extras_require={
         'tests': [
             'pylint-quotes==0.2.*',
-            'pylint==2.16.*',
+            'pylint>=2.16,<2.18',
             'pytest-cov==4.*',
             'pytest-instafail==0.4.*',
             'pytest-isort==3.1.*',
