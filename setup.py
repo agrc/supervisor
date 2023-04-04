@@ -38,14 +38,14 @@ setup(
     keywords=['gis'],
     install_requires=[
         'requests==2.28.*',
-        'sendgrid==6.9.*',
+        'sendgrid==6.10.*',
     ],
     extras_require={
         'tests': [
             'pylint-quotes==0.2.*',
-            'pylint==2.16.*',
+            'pylint==2.17.*',
             'pytest-cov==4.*',
-            'pytest-instafail==0.4.*',
+            'pytest-instafail==0.5.*',
             'pytest-isort==3.1.*',
             'pytest-mock==3.10.*',
             'pytest-pylint==0.19.*',
