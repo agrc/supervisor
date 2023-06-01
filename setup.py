@@ -37,7 +37,7 @@ setup(
     },
     keywords=['gis'],
     install_requires=[
-        'requests==2.28.*',
+        'requests>=2.28,<2.32',
         'sendgrid==6.10.*',
     ],
     extras_require={
