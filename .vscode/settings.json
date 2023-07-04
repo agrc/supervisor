@@ -1,11 +1,17 @@
 {
   "cSpell.words": [
+    "agol",
     "AGRC",
     "Codecov",
+    "excepthook",
+    "fstring",
+    "gethostname",
+    "gzipper",
     "instafail",
     "isort",
     "pylint",
     "pytest",
+    "sendgrid",
     "yapf"
   ],
   "coverage-gutters.highlightdark": "rgb(61, 153, 112, .05)",
