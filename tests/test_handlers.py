@@ -7,8 +7,6 @@ from unittest import mock
 
 import pytest
 import python_http_client
-import sendgrid
-from sendgrid.helpers.mail import attachment
 
 from supervisor import message_handlers, models
 from supervisor.models import MessageDetails
@@ -143,7 +141,7 @@ def test_build_message_with_multiple_to_addresses(mocker):
     assert test_message.get_payload()[1].get_payload() == '<p>testing version: 0</p>'
 
 
-def test_gzip_not_called_for_non_existant_attachments(mocker, tmp_path):
+def test_gzip_not_called_for_non_existent_attachments(mocker, tmp_path):
 
     distribution_Mock = mocker.Mock()
     distribution_Mock.version = 0
@@ -200,18 +198,18 @@ def test_gzip_called_3_times_for_3_attachments(mocker, tmp_path):
     distributions = [distribution_Mock]
     mocker.patch('pkg_resources.require', return_value=distributions)
 
-    atts = []
+    attributes = []
     for i in range(1, 4):
         path = tmp_path / f'att{i}'
-        with open(path, 'w') as attfile:
-            attfile.write(f'att{i}')
-        atts.append(path)
+        with open(path, 'w') as attribute_file:
+            attribute_file.write(f'att{i}')
+        attributes.append(path)
 
     message_details = MessageDetails()
     message_details.message = 'test_message'
     message_details.subject = 'test_subject'
     message_details.project_name = 'testing'
-    message_details.attachments.extend(atts)
+    message_details.attachments.extend(attributes)
 
     handler_mock = mocker.Mock()
     handler_mock.email_settings = {
@@ -224,7 +222,7 @@ def test_gzip_called_3_times_for_3_attachments(mocker, tmp_path):
     assert handler_mock._build_gzip_attachment.call_count == 3
 
 
-def test_gzipper(mocker, tmp_path):
+def test_gzip(mocker, tmp_path):
     # with BytesIO(b'test text') as test_bytes:
     #     # mocker.patch.object(message_handlers.EmailHandler._build_gzip_attachment, 'input_file_object', test_bytes)
     #     mocker.patch('sys.open', return_value=test_bytes)
@@ -437,7 +435,7 @@ class TestSendGridHandlerParts:
         assert len(recipient_list) == 1
         assert recipient_list[0].email == 'foo@bar.com'
 
-    def test_build_recipient_addresses_multiple_addrs(self, mocker):
+    def test_build_recipient_addresses_multiple_addresses(self, mocker):
         to_addr = ['foo@bar.com', 'cheddar@baz.com']
         recipient_list = message_handlers.SendGridHandler._build_recipient_addresses(to_addr)
         assert len(recipient_list) == 2
@@ -545,7 +543,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@bar.com',
             'to_addresses': '',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
         recipient_mock = mocker.patch.object(message_handlers.SendGridHandler, '_build_recipient_addresses')
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
@@ -561,7 +559,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': '',
             'to_addresses': 'foo@bar.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
         recipient_mock = mocker.patch.object(message_handlers.SendGridHandler, '_build_recipient_addresses')
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
@@ -581,7 +579,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         message_details = models.MessageDetails()
@@ -607,7 +605,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         message_details = models.MessageDetails()
@@ -632,7 +630,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         message_details = models.MessageDetails()
@@ -656,7 +654,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         message_details = models.MessageDetails()
@@ -678,7 +676,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         message_details = models.MessageDetails()
@@ -702,7 +700,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         att_path = tmp_path
@@ -731,11 +729,11 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         working_dir = tmp_path
-        dir_to_be_attached = working_dir / 'zipme'
+        dir_to_be_attached = working_dir / 'zip_me'
         dir_to_be_attached.mkdir()
         temp_a = dir_to_be_attached / 'a.txt'
         temp_a.write_text('a')
@@ -764,7 +762,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         working_dir = tmp_path
@@ -772,7 +770,7 @@ class TestSendGridHandlerWhole:
         single_file = working_dir / 'single.txt'
         single_file.write_text('single')
 
-        dir_to_be_attached = working_dir / 'zipme'
+        dir_to_be_attached = working_dir / 'zip_me'
         dir_to_be_attached.mkdir()
         temp_a = dir_to_be_attached / 'a.txt'
         temp_a.write_text('a')
@@ -803,7 +801,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         working_dir = tmp_path
@@ -811,7 +809,7 @@ class TestSendGridHandlerWhole:
         single_file = working_dir / 'single.txt'
         single_file.write_text('single')
 
-        dir_to_be_attached = working_dir / 'zipme'
+        dir_to_be_attached = working_dir / 'zip_me'
         dir_to_be_attached.mkdir()
         temp_a = dir_to_be_attached / 'a.txt'
         temp_a.write_text('a')
@@ -835,14 +833,14 @@ class TestSendGridHandlerWhole:
         assert dir_to_be_attached.with_suffix('.zip').name in attachment_names
         assert single_file.with_suffix('.zip').name in attachment_names
 
-    def test_send_message_full_integration_with_non_existant_single_file_attachment(self, mocker, tmp_path):
+    def test_send_message_full_integration_with_non_existent_single_file_attachment(self, mocker, tmp_path):
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
 
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         bad_file = tmp_path / 'bad.txt'
@@ -863,14 +861,14 @@ class TestSendGridHandlerWhole:
         assert 'does not exist' in request_body['content'][0]['value']
         assert 'attachments' not in request_body
 
-    def test_send_message_full_integration_with_nonpath_single_file_attachment(self, mocker):
+    def test_send_message_full_integration_with_non_path_single_file_attachment(self, mocker):
 
         sg_api_mock = mocker.patch('sendgrid.SendGridAPIClient')
 
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         message_details = models.MessageDetails()
@@ -896,7 +894,7 @@ class TestSendGridHandlerWhole:
         sendgrid_settings = {
             'from_address': 'foo@example.com',
             'to_addresses': 'cheddar@example.com',
-            'api_key': 'itsasecret',
+            'api_key': 'its_a_secret',
         }
 
         good_file = tmp_path / 'good.txt'
@@ -987,7 +985,7 @@ class TestSendGridHandlerAttachments:
 
     def test_process_attachments_zips_both_directory_and_single_file(self, mocker, tmp_path):
         working_dir = tmp_path
-        dir_to_be_zipped = working_dir / 'zipme'
+        dir_to_be_zipped = working_dir / 'zip_me'
         dir_to_be_zipped.mkdir()
         temp_a = dir_to_be_zipped / 'a.txt'
         temp_a.write_text('a')
@@ -1003,19 +1001,19 @@ class TestSendGridHandlerAttachments:
         attachment_mock = mocker.patch.object(
             message_handlers.SendGridHandler, '_build_attachment', _build_attachment_side_effect
         )
-        sendgrid_settings = {'api_key': 'itsasecret'}
+        sendgrid_settings = {'api_key': 'its_a_secret'}
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
 
         attachments = sendgrid_handler._process_attachments([dir_to_be_zipped, single_file_to_be_zipped])
 
         assert len(attachments) == 2
         att_names = [Path(f).name for f in attachments]
-        assert 'zipme.zip' in att_names
+        assert 'zip_me.zip' in att_names
         assert 'single.zip' in att_names
 
     def test_process_attachments_zips_both_single_file_and_directory(self, mocker, tmp_path):
         working_dir = tmp_path
-        dir_to_be_zipped = working_dir / 'zipme'
+        dir_to_be_zipped = working_dir / 'zip_me'
         dir_to_be_zipped.mkdir()
         temp_a = dir_to_be_zipped / 'a.txt'
         temp_a.write_text('a')
@@ -1031,19 +1029,19 @@ class TestSendGridHandlerAttachments:
         attachment_mock = mocker.patch.object(
             message_handlers.SendGridHandler, '_build_attachment', _build_attachment_side_effect
         )
-        sendgrid_settings = {'api_key': 'itsasecret'}
+        sendgrid_settings = {'api_key': 'its_a_secret'}
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
 
         attachments = sendgrid_handler._process_attachments([single_file_to_be_zipped, dir_to_be_zipped])
 
         assert len(attachments) == 2
         att_names = [Path(f).name for f in attachments]
-        assert 'zipme.zip' in att_names
+        assert 'zip_me.zip' in att_names
         assert 'single.zip' in att_names
 
     def test_zip_whole_directory(self, mocker, tmp_path):
         working_dir = tmp_path
-        dir_to_be_zipped = working_dir / 'zipme'
+        dir_to_be_zipped = working_dir / 'zip_me'
         dir_to_be_zipped.mkdir()
         temp_a = dir_to_be_zipped / 'a.txt'
         temp_a.write_text('a')
@@ -1052,10 +1050,10 @@ class TestSendGridHandlerAttachments:
 
         zipped_path = message_handlers.SendGridHandler._zip_whole_directory(working_dir, dir_to_be_zipped)
         zip_name_list = zipfile.ZipFile(zipped_path).namelist()
-        assert 'zipme/' in zip_name_list
-        assert 'zipme/a.txt' in zip_name_list
-        assert 'zipme/b.txt' in zip_name_list
-        # assert zipfile.ZipFile(zipped_path).namelist() == ['zipme/', 'zipme/a.txt', 'zipme/b.txt']
+        assert 'zip_me/' in zip_name_list
+        assert 'zip_me/a.txt' in zip_name_list
+        assert 'zip_me/b.txt' in zip_name_list
+        # assert zipfile.ZipFile(zipped_path).namelist() == ['zip_me/', 'zip_me/a.txt', 'zip_me/b.txt']
 
     def test_zip_single_file(self, mocker, tmp_path):
         working_dir = tmp_path
@@ -1097,7 +1095,7 @@ class TestSendGridHandlerAttachments:
 
     def test_build_attachment_directory(self, mocker, tmp_path):
         working_dir = tmp_path
-        dir_to_be_zipped = working_dir / 'zipme'
+        dir_to_be_zipped = working_dir / 'zip_me'
         dir_to_be_zipped.mkdir()
         temp_a = dir_to_be_zipped / 'a.txt'
         temp_a.write_text('a')
@@ -1112,6 +1110,6 @@ class TestSendGridHandlerAttachments:
 
         attachment = message_handlers.SendGridHandler._build_attachment(dir_zip_path)
 
-        assert attachment.file_name.get() == 'zipme.zip'
+        assert attachment.file_name.get() == 'zip_me.zip'
         assert attachment.file_type.get() == 'application/zip'
         assert attachment.file_content.get() == encoded

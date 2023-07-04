@@ -1,8 +1,7 @@
 import sys
-import types
 from pathlib import Path
 
-from supervisor import message_handlers, models
+from supervisor import models
 
 
 def test_supervisor_constructor_does_proper_setup(mocker):
@@ -56,7 +55,7 @@ def test_add_message_handler(mocker):
     assert sim_sup.message_handlers[-1] == handler_mock
 
 
-class TestMesssageDetails:
+class TestMessageDetails:
 
     def test_attachments_single_str(self, mocker):
 

@@ -11,7 +11,7 @@ import socket
 from pathlib import Path
 
 from supervisor import secrets
-from supervisor.message_handlers import EmailHandler, SendGridHandler
+from supervisor.message_handlers import SendGridHandler
 from supervisor.models import MessageDetails, Supervisor
 
 if __name__ == '__main__':
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     test_logger.addHandler(test_handler)
     test_logger.setLevel(logging.DEBUG)
 
-    #: Add somethign to the log
+    #: Add something to the log
     test_logger.info(f'test run: {datetime.datetime.now()}')
 
     #: Instantiate a Supervisor object
