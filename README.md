@@ -1,4 +1,4 @@
-# agrc/python
+# Supervisor
 
 ![Build Status](https://github.com/agrc/supervisor/workflows/Build%20and%20Test/badge.svg)
 <!-- [![codecov](https://codecov.io/gh/agrc/python/branch/main/graph/badge.svg)](https://codecov.io/gh/agrc/python) -->
