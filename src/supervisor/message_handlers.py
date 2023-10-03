@@ -372,7 +372,9 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         attachment_dir = Path(dir_to_be_zipped)
         zip_base_name = Path(working_dir, attachment_dir.name)
-        zip_out_path = make_archive(str(zip_base_name), 'zip', root_dir=attachment_dir.parent, base_dir=attachment_dir.name)
+        zip_out_path = make_archive(
+            str(zip_base_name), 'zip', root_dir=attachment_dir.parent, base_dir=attachment_dir.name
+        )
         return zip_out_path
 
     @staticmethod
