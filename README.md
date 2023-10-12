@@ -1,7 +1,7 @@
 # Supervisor
 
-![Build Status](https://github.com/agrc/supervisor/workflows/Build%20and%20Test/badge.svg)
-<!-- [![codecov](https://codecov.io/gh/agrc/python/branch/main/graph/badge.svg)](https://codecov.io/gh/agrc/python) -->
+[![Push Events](https://github.com/agrc/supervisor/actions/workflows/push.yml/badge.svg)](https://github.com/agrc/supervisor/actions/workflows/push.yml)
+[![codecov](https://codecov.io/gh/agrc/supervisor/branch/main/graph/badge.svg)](https://codecov.io/gh/agrc/supervisor)
 
 A module for watching over scheduled processes: catching errors and sending messages for errors and/or summary logs.
 
