@@ -48,7 +48,7 @@ setup(
             'pytest-instafail~=0.5',
             'pytest-isort~=3.1',
             'pytest-mock~=3.11',
-            'pytest-pylint~=0.19',
+            # 'pytest-pylint~=0.19',  #: Causes pytest to fail
             'pytest-watch~=4.2',
             'pytest~=7.4',
             'yapf~=0.40',
