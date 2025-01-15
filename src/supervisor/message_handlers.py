@@ -61,7 +61,7 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         gzip input_path into a MIMEApplication object
     """
 
-    def __init__(self, email_settings, client_name='unknown client', client_version='not specified'):
+    def __init__(self, email_settings, client_name="unknown client", client_version="not specified"):
         self.email_settings = email_settings
         self.client_name = client_name
         self.client_version = client_version
@@ -77,18 +77,18 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         #: Configure outgoing settings
         try:
-            from_address = self.email_settings['from_address']
-            to_addresses = self.email_settings['to_addresses']
-            smtp_server = self.email_settings['smtpServer']
-            smtp_port = self.email_settings['smtpPort']
+            from_address = self.email_settings["from_address"]
+            to_addresses = self.email_settings["to_addresses"]
+            smtp_server = self.email_settings["smtpServer"]
+            smtp_port = self.email_settings["smtpPort"]
 
         except KeyError:
-            warnings.warn('Required email settings do not exist. No emails sent.')
+            warnings.warn("Required email settings do not exist. No emails sent.")
             return
 
         for setting in [from_address, to_addresses, smtp_server, smtp_port]:
             if not setting:
-                warnings.warn('Required email settings exist but aren\'t populated. No emails sent.')
+                warnings.warn("Required email settings exist but aren't populated. No emails sent.")
                 return
 
         message = self._build_message(message_details)
@@ -113,25 +113,25 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         #: Use body as message if it's already a MIMEMultipart, otherwise create a new MIMEMultipart as the message
         message = MIMEMultipart()
-        message.attach(MIMEText(message_details.message, 'html'))
+        message.attach(MIMEText(message_details.message, "html"))
 
-        version = MIMEText(f'<p>{self.client_name} version: {self.client_version}</p>', 'html')
+        version = MIMEText(f"<p>{self.client_name} version: {self.client_version}</p>", "html")
         message.attach(version)
 
         #: Split recipient addresses if needed.
-        to_addresses = self.email_settings['to_addresses']
+        to_addresses = self.email_settings["to_addresses"]
         if not isinstance(to_addresses, str):
-            to_addresses_joined = ','.join(to_addresses)
+            to_addresses_joined = ",".join(to_addresses)
         else:
             to_addresses_joined = to_addresses
 
         #: Add various elements of the message
-        if 'prefix' in self.email_settings:
-            message['Subject'] = self.email_settings['prefix'] + message_details.subject
+        if "prefix" in self.email_settings:
+            message["Subject"] = self.email_settings["prefix"] + message_details.subject
         else:
-            message['Subject'] = message_details.subject
-        message['From'] = self.email_settings['from_address']
-        message['To'] = to_addresses_joined
+            message["Subject"] = message_details.subject
+        message["From"] = self.email_settings["from_address"]
+        message["To"] = to_addresses_joined
 
         #: gzip all attachments and add to message
         for original_path in message_details.attachments:
@@ -158,13 +158,13 @@ class EmailHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         attachment : MIMEApplication
             The gzip'ed contents of input_path ready to attach to a MIMEMultipart message.
         """
-        with (open(input_path, 'rb')) as input_file_object, io.BytesIO() as output_stream:
-            gzipper = gzip.GzipFile(mode='wb', fileobj=output_stream)
+        with open(input_path, "rb") as input_file_object, io.BytesIO() as output_stream:
+            gzipper = gzip.GzipFile(mode="wb", fileobj=output_stream)
             gzipper.writelines(input_file_object)
             gzipper.close()
-            attachment = MIMEApplication(output_stream.getvalue(), 'x-gzip')
-            attachment_filename = input_path.name + '.gz'
-            attachment.add_header('Content-Disposition', f'attachment; filename="{attachment_filename}"')
+            attachment = MIMEApplication(output_stream.getvalue(), "x-gzip")
+            attachment_filename = input_path.name + ".gz"
+            attachment.add_header("Content-Disposition", f'attachment; filename="{attachment_filename}"')
 
             return attachment
 
@@ -189,9 +189,9 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Build a message and send using the SendGrid API's helper classes
     """
 
-    def __init__(self, sendgrid_settings, client_name='unknown client', client_version='not specified'):
+    def __init__(self, sendgrid_settings, client_name="unknown client", client_version="not specified"):
         self.sendgrid_settings = sendgrid_settings
-        self.sendgrid_client = sendgrid.SendGridAPIClient(api_key=self.sendgrid_settings['api_key'])
+        self.sendgrid_client = sendgrid.SendGridAPIClient(api_key=self.sendgrid_settings["api_key"])
         self.client_name = client_name
         self.client_version = client_version
 
@@ -224,13 +224,13 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         try:
             self.sendgrid_client.client.mail.send.post(request_body=mail.get())
         except python_http_client.BadRequestsError as err:
-            if 'HTTP Error 400: Bad Request' in str(err):
-                warnings.warn('SendGrid error 400, might be missing a required Mail component; no e-mail sent.')
+            if "HTTP Error 400: Bad Request" in str(err):
+                warnings.warn("SendGrid error 400, might be missing a required Mail component; no e-mail sent.")
             else:
                 raise err
         except python_http_client.UnauthorizedError as err:
-            if 'HTTP Error 401: Unauthorized' in str(err):
-                warnings.warn('SendGrid error 401: Unauthorized. Check API key.')
+            if "HTTP Error 401: Unauthorized" in str(err):
+                warnings.warn("SendGrid error 401: Unauthorized. Check API key.")
             else:
                 raise err
 
@@ -242,15 +242,15 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         """
 
         try:
-            from_address = self.sendgrid_settings['from_address']
-            to_addresses = self.sendgrid_settings['to_addresses']
+            from_address = self.sendgrid_settings["from_address"]
+            to_addresses = self.sendgrid_settings["to_addresses"]
 
         except KeyError:
-            warnings.warn('To/From address settings do not exist. No emails sent.')
+            warnings.warn("To/From address settings do not exist. No emails sent.")
             return None, None
 
         if not from_address or not to_addresses:
-            warnings.warn('To/From address settings exist but are empty. No emails sent.')
+            warnings.warn("To/From address settings exist but are empty. No emails sent.")
             return None, None
 
         return from_address, to_addresses
@@ -283,8 +283,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         """
 
         subject = message_details.subject
-        if 'prefix' in self.sendgrid_settings:
-            subject = self.sendgrid_settings['prefix'] + subject
+        if "prefix" in self.sendgrid_settings:
+            subject = self.sendgrid_settings["prefix"] + subject
 
         return subject
 
@@ -300,10 +300,10 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             Content: Content of email as a SendGrid Content object
         """
 
-        client_version = f'\n\n{client_name} version: {client_version}'
+        client_version = f"\n\n{client_name} version: {client_version}"
         message += client_version
 
-        return Content('text/plain', message)
+        return Content("text/plain", message)
 
     @staticmethod
     def _verify_attachments(attachments):
@@ -316,7 +316,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             str, List: Warning message to be appended to main message, list of verified attachments
         """
 
-        error_message = ''
+        error_message = ""
         good_attachments = []
         for attachment in attachments:
             try:
@@ -326,11 +326,11 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
                     continue
                 good_attachments.append(attachment)
             except TypeError as err:
-                if 'expected str, bytes or os.PathLike object, not' in str(err):
+                if "expected str, bytes or os.PathLike object, not" in str(err):
                     error_message += f'* Cannot get Path() of attachment "{attachment}"\n'
 
         if error_message:
-            error_message = f'{"="*20}\n Supervisor Warning\n{"="*20}\n{error_message}{"="*20}\n\n'
+            error_message = f"{'=' * 20}\n Supervisor Warning\n{'=' * 20}\n{error_message}{'=' * 20}\n\n"
 
         return error_message, good_attachments
 
@@ -348,7 +348,6 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         #: Note: if we use this context manager, zip files in working_dir don't persist for testing purposes.
         with TemporaryDirectory() as working_dir:
-
             for attachment in attachments:
                 if Path(attachment).is_dir():
                     zip_path = self._zip_whole_directory(working_dir, attachment)
@@ -373,7 +372,7 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         attachment_dir = Path(dir_to_be_zipped)
         zip_base_name = Path(working_dir, attachment_dir.name)
         zip_out_path = make_archive(
-            str(zip_base_name), 'zip', root_dir=attachment_dir.parent, base_dir=attachment_dir.name
+            str(zip_base_name), "zip", root_dir=attachment_dir.parent, base_dir=attachment_dir.name
         )
         return zip_out_path
 
@@ -389,8 +388,8 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             Path: Path to the new zipfile
         """
         attachment_path = Path(attachment)
-        zip_out_path = Path(working_dir, attachment_path.stem).with_suffix('.zip')
-        with ZipFile(zip_out_path, 'x', compression=ZIP_DEFLATED) as new_zip:
+        zip_out_path = Path(working_dir, attachment_path.stem).with_suffix(".zip")
+        with ZipFile(zip_out_path, "x", compression=ZIP_DEFLATED) as new_zip:
             new_zip.write(attachment_path, attachment_path.name)
         return zip_out_path
 
@@ -405,12 +404,12 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             Attachment: Attachment object ready to be added to Mail object.
         """
         #: Build a SendGrid Attachment object with various fields
-        with open(zip_path, 'rb') as zip_file:
+        with open(zip_path, "rb") as zip_file:
             data = zip_file.read()
         encoded = b64encode(data).decode()
         attachment = Attachment()
         attachment.file_content = FileContent(encoded)
-        attachment.file_type = FileType('application/zip')
+        attachment.file_type = FileType("application/zip")
         attachment.file_name = FileName(Path(zip_path).name)
         return attachment
 

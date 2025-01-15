@@ -5,18 +5,17 @@ from supervisor import models
 
 
 def test_supervisor_constructor_does_proper_setup(mocker):
-    exceptions_mock = mocker.patch('supervisor.models.Supervisor._manage_exceptions')
+    exceptions_mock = mocker.patch("supervisor.models.Supervisor._manage_exceptions")
 
-    sim_sup = models.Supervisor('test project')
+    sim_sup = models.Supervisor("test project")
 
     assert exceptions_mock.called_once()
 
 
 def test_exception_handler_replacement(mocker, capsys):
+    sim_sup = models.Supervisor("test")
 
-    sim_sup = models.Supervisor('test')
-
-    assert 'global_exception_handler' in repr(sys.excepthook)
+    assert "global_exception_handler" in repr(sys.excepthook)
 
 
 #: These next three are difficult/impossible to test if global_exception_handler is a closure/inner method
@@ -46,8 +45,8 @@ def test_global_exception_handler_creates_proper_error_message(mocker):
 
 
 def test_add_message_handler(mocker):
-    sim_sup = models.Supervisor('test')
-    handler_mock = mocker.Mock(name='handler_mock')
+    sim_sup = models.Supervisor("test")
+    handler_mock = mocker.Mock(name="handler_mock")
 
     sim_sup.add_message_handler(handler_mock)
 
@@ -56,40 +55,35 @@ def test_add_message_handler(mocker):
 
 
 class TestMessageDetails:
-
     def test_attachments_single_str(self, mocker):
-
         message = models.MessageDetails()
-        message.attachments = r'c:\temp\foo.bar'
+        message.attachments = r"c:\temp\foo.bar"
 
-        assert message.attachments == [r'c:\temp\foo.bar']
+        assert message.attachments == [r"c:\temp\foo.bar"]
 
     def test_attachments_single_Path(self, mocker):
-
         message = models.MessageDetails()
-        message.attachments = Path(r'c:\temp\foo.bar')
+        message.attachments = Path(r"c:\temp\foo.bar")
 
-        assert message.attachments == [Path(r'c:\temp\foo.bar')]
+        assert message.attachments == [Path(r"c:\temp\foo.bar")]
 
     def test_attachments_list_of_strs(self, mocker):
-
         message = models.MessageDetails()
-        message.attachments = [r'c:\temp\foo.bar', r'c:\temp\bar.baz']
+        message.attachments = [r"c:\temp\foo.bar", r"c:\temp\bar.baz"]
 
-        assert message.attachments == [r'c:\temp\foo.bar', r'c:\temp\bar.baz']
+        assert message.attachments == [r"c:\temp\foo.bar", r"c:\temp\bar.baz"]
 
     def test_attachments_list_of_Paths(self, mocker):
-
         message = models.MessageDetails()
-        message.attachments = [Path(r'c:\temp\foo.bar'), Path(r'c:\temp\bar.baz')]
+        message.attachments = [Path(r"c:\temp\foo.bar"), Path(r"c:\temp\bar.baz")]
 
-        assert message.attachments == [Path(r'c:\temp\foo.bar'), Path(r'c:\temp\bar.baz')]
+        assert message.attachments == [Path(r"c:\temp\foo.bar"), Path(r"c:\temp\bar.baz")]
 
     def test_attachments_mixed_list(self, mocker):
         message = models.MessageDetails()
-        message.attachments = [r'c:\temp\foo.bar', Path(r'c:\temp\bar.baz')]
+        message.attachments = [r"c:\temp\foo.bar", Path(r"c:\temp\bar.baz")]
 
-        assert message.attachments == [r'c:\temp\foo.bar', Path(r'c:\temp\bar.baz')]
+        assert message.attachments == [r"c:\temp\foo.bar", Path(r"c:\temp\bar.baz")]
 
     def test_attachment_empty_list(self, mocker):
         message = models.MessageDetails()
