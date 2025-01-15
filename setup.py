@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 """
 setup.py
-A module that installs supervsior as a module
+A module that installs supervisor as a module
 """
 
 from glob import glob
