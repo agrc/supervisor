@@ -36,10 +36,10 @@ if __name__ == "__main__":
 
     #: Specify the email server and addresses
     email_settings = {
-        "smtpServer": "send.state.ut.us",
+        "smtpServer": "outgoing.smtp.server",
         "smtpPort": 25,
-        "from_address": "noreply@utah.gov",
-        "to_addresses": "jdadams@utah.gov",
+        "from_address": "noreply@example.com",
+        "to_addresses": "recipient@example.com",
         "prefix": f"Example on {socket.gethostname()}: ",
     }
 
@@ -52,14 +52,14 @@ if __name__ == "__main__":
 
     #: Specify the to/from addresses, subject prefix, and sendgrid API key
     sendgrid_settings = {
-        "from_address": "noreply@utah.gov",
-        "to_addresses": "jdadams@utah.gov",
+        "from_address": "noreply@example.com",
+        "to_addresses": "recipient@example.com",
         "prefix": f"Example on {socket.gethostname()}: ",
         "api_key": secrets.SENDGRID_API_KEY,
     }
 
     #: Instantiate a new SendGridHandler and register it with our Supervisor
-    sim_sup.add_message_handler(SendGridHandler(sendgrid_settings, "agrc-supervisor"))
+    sim_sup.add_message_handler(SendGridHandler(sendgrid_settings, "ugrc-supervisor"))
 
     #: Send a message with both a directory attachment and a single file attachment
     message = MessageDetails()

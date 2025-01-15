@@ -38,8 +38,8 @@ setup(
     },
     keywords=["gis"],
     install_requires=[
-        "requests~=2.31",
-        "sendgrid~=6.11",
+        "requests==2.31",
+        "sendgrid==6.*",
     ],
     extras_require={
         "tests": [
