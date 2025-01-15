@@ -32,7 +32,6 @@ class Supervisor:
     """
 
     def __init__(self, handle_errors=True, logger=None, log_path=None):
-
         #: Set up our list of MessageHandlers
         self.message_handlers = []
         self.logger = logger
@@ -84,13 +83,13 @@ class Supervisor:
             if self.logger:
                 last_traceback = (traceback.extract_tb(tb))[-1]
                 line_number = last_traceback[1]
-                file_name = last_traceback[0].split('.')[0]
-                self.logger.error(f'global error handler line: {line_number} ({file_name})')  # pylint: disable=logging-fstring-interpolation
+                file_name = last_traceback[0].split(".")[0]
+                self.logger.error(f"global error handler line: {line_number} ({file_name})")  # pylint: disable=logging-fstring-interpolation
                 self.logger.error(error)
 
             message_details = MessageDetails()
             message_details.message = error
-            message_details.subject = 'ERROR'
+            message_details.subject = "ERROR"
             message_details.attachments = [self.log_path]
             self.notify(message_details)
 
@@ -113,9 +112,9 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
     """
 
     def __init__(self):
-        self.message = ''
+        self.message = ""
         self._attachments = []  #: Strings or Paths
-        self.subject = ''
+        self.subject = ""
 
     @property
     def attachments(self):
