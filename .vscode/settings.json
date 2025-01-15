@@ -21,7 +21,7 @@
   "coverage-gutters.showLineCoverage": true,
   "coverage-gutters.showRulerCoverage": false,
   "editor.codeActionsOnSave": {
-    "source.organizeImports": true
+    "source.organizeImports": "explicit"
   },
   "editor.formatOnSave": true,
   "editor.rulers": [

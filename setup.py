@@ -14,12 +14,12 @@ with open('src/supervisor/version.py', encoding='utf-8') as fp:
     exec(fp.read(), version)
 
 setup(
-    name='agrc-supervisor',
+    name='ugrc-supervisor',
     version=version['__version__'],
     license='MIT',
     description='A watchdog module for scheduled scripts that sends notifications, including any uncaught exceptions.',
-    author='Jake Adams, UGRC',
-    author_email='jdadams@utah.gov',
+    author='UGRC',
+    author_email='ugrc-developers@utah.gov',
     url='https://github.com/agrc/supervisor',
     packages=find_packages('src'),
     package_dir={'': 'src'},
@@ -37,21 +37,17 @@ setup(
     },
     keywords=['gis'],
     install_requires=[
-        'requests~=2.32',
+        'requests~=2.31',
         'sendgrid~=6.11',
     ],
     extras_require={
         'tests': [
-            'pylint-quotes~=0.2',
-            'pylint>=2.17,<4.0',
-            'pytest-cov>=4.1,<7.0',
-            'pytest-instafail~=0.5',
-            'pytest-isort>=3.1,<5.0',
-            'pytest-mock~=3.11',
-            # 'pytest-pylint~=0.19',  #: Causes pytest to fail
-            'pytest-watch~=4.2',
-            'pytest>=7.4,<9.0',
-            'yapf~=0.40',
+            "pytest-cov==6.*",
+            "pytest-instafail==0.5.*",
+            "pytest-mock==3.*",
+            "pytest-watch==4.*",
+            "pytest==8.*",
+            "ruff==0.*",
         ]
     },
     setup_requires=[
