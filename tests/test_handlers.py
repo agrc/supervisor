@@ -156,7 +156,7 @@ def test_gzip_not_called_for_non_existent_attachments(mocker, tmp_path):
         "from_address": "testing@example.com",
     }
 
-    test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
+    message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
     assert not handler_mock._build_gzip_attachment.called
 
@@ -179,7 +179,7 @@ def test_gzip_not_called_for_empty_str_attachment_path(mocker):
         "from_address": "testing@example.com",
     }
 
-    test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
+    message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
     assert not handler_mock._build_gzip_attachment.called
 
@@ -209,7 +209,7 @@ def test_gzip_called_3_times_for_3_attachments(mocker, tmp_path):
         "from_address": "testing@example.com",
     }
 
-    test_message = message_handlers.EmailHandler._build_message(handler_mock, message_details)
+    message_handlers.EmailHandler._build_message(handler_mock, message_details)
 
     assert handler_mock._build_gzip_attachment.call_count == 3
 
@@ -222,7 +222,7 @@ def test_gzip(mocker, tmp_path):
     temp_path = tmp_path / "test"
     with open(temp_path, "w") as temp_file:
         temp_file.write("test text")
-    temp_name = temp_path.name + ".gz"
+    # temp_name = temp_path.name + ".gz"
 
     attachment = message_handlers.EmailHandler._build_gzip_attachment(temp_path)
 
@@ -648,7 +648,7 @@ class TestSendGridHandlerWhole:
             sendgrid_handler.send_message(message_details)
 
     def test_send_message_full_integration_with_version(self, mocker):
-        sg_api_mock = mocker.patch("sendgrid.SendGridAPIClient")
+        mocker.patch("sendgrid.SendGridAPIClient")
 
         sendgrid_settings = {
             "from_address": "foo@example.com",
@@ -671,7 +671,7 @@ class TestSendGridHandlerWhole:
         assert "attachments" not in request_body
 
     def test_send_message_full_integration_with_single_file_attachment(self, mocker, tmp_path):
-        sg_api_mock = mocker.patch("sendgrid.SendGridAPIClient")
+        mocker.patch("sendgrid.SendGridAPIClient")
 
         sendgrid_settings = {
             "from_address": "foo@example.com",
@@ -699,7 +699,7 @@ class TestSendGridHandlerWhole:
         assert request_body["attachments"][0]["filename"] == temp_a.with_suffix(".zip").name
 
     def test_send_message_full_integration_with_directory_attachment(self, mocker, tmp_path):
-        sg_api_mock = mocker.patch("sendgrid.SendGridAPIClient")
+        mocker.patch("sendgrid.SendGridAPIClient")
 
         sendgrid_settings = {
             "from_address": "foo@example.com",
@@ -731,7 +731,7 @@ class TestSendGridHandlerWhole:
         assert request_body["attachments"][0]["filename"] == dir_to_be_attached.with_suffix(".zip").name
 
     def test_send_message_full_integration_with_directory_and_single_file_attachments(self, mocker, tmp_path):
-        sg_api_mock = mocker.patch("sendgrid.SendGridAPIClient")
+        mocker.patch("sendgrid.SendGridAPIClient")
 
         sendgrid_settings = {
             "from_address": "foo@example.com",
@@ -769,7 +769,7 @@ class TestSendGridHandlerWhole:
         assert single_file.with_suffix(".zip").name in attachment_names
 
     def test_send_message_full_integration_with_single_file_and_directory_attachments(self, mocker, tmp_path):
-        sg_api_mock = mocker.patch("sendgrid.SendGridAPIClient")
+        mocker.patch("sendgrid.SendGridAPIClient")
 
         sendgrid_settings = {
             "from_address": "foo@example.com",
@@ -807,7 +807,7 @@ class TestSendGridHandlerWhole:
         assert single_file.with_suffix(".zip").name in attachment_names
 
     def test_send_message_full_integration_with_non_existent_single_file_attachment(self, mocker, tmp_path):
-        sg_api_mock = mocker.patch("sendgrid.SendGridAPIClient")
+        mocker.patch("sendgrid.SendGridAPIClient")
 
         sendgrid_settings = {
             "from_address": "foo@example.com",
@@ -834,7 +834,7 @@ class TestSendGridHandlerWhole:
         assert "attachments" not in request_body
 
     def test_send_message_full_integration_with_non_path_single_file_attachment(self, mocker):
-        sg_api_mock = mocker.patch("sendgrid.SendGridAPIClient")
+        mocker.patch("sendgrid.SendGridAPIClient")
 
         sendgrid_settings = {
             "from_address": "foo@example.com",
@@ -859,7 +859,7 @@ class TestSendGridHandlerWhole:
         assert "attachments" not in request_body
 
     def test_send_message_full_integration_with_good_and_bad_single_file_attachment(self, mocker, tmp_path):
-        sg_api_mock = mocker.patch("sendgrid.SendGridAPIClient")
+        mocker.patch("sendgrid.SendGridAPIClient")
 
         sendgrid_settings = {
             "from_address": "foo@example.com",
@@ -966,9 +966,7 @@ class TestSendGridHandlerAttachments:
         def _build_attachment_side_effect(self_obj, value):
             return value
 
-        attachment_mock = mocker.patch.object(
-            message_handlers.SendGridHandler, "_build_attachment", _build_attachment_side_effect
-        )
+        mocker.patch.object(message_handlers.SendGridHandler, "_build_attachment", _build_attachment_side_effect)
         sendgrid_settings = {"api_key": "its_a_secret"}
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
 
@@ -994,9 +992,7 @@ class TestSendGridHandlerAttachments:
         def _build_attachment_side_effect(self_obj, value):
             return value
 
-        attachment_mock = mocker.patch.object(
-            message_handlers.SendGridHandler, "_build_attachment", _build_attachment_side_effect
-        )
+        mocker.patch.object(message_handlers.SendGridHandler, "_build_attachment", _build_attachment_side_effect)
         sendgrid_settings = {"api_key": "its_a_secret"}
         sendgrid_handler = message_handlers.SendGridHandler(sendgrid_settings)
 

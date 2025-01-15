@@ -7,13 +7,13 @@ from supervisor import models
 def test_supervisor_constructor_does_proper_setup(mocker):
     exceptions_mock = mocker.patch("supervisor.models.Supervisor._manage_exceptions")
 
-    sim_sup = models.Supervisor("test project")
+    models.Supervisor("test project")
 
     assert exceptions_mock.called_once()
 
 
 def test_exception_handler_replacement(mocker, capsys):
-    sim_sup = models.Supervisor("test")
+    models.Supervisor("test")
 
     assert "global_exception_handler" in repr(sys.excepthook)
 
