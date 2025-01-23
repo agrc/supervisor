@@ -1,0 +1,18 @@
+# Changelog
+
+## [3.1.1](https://github.com/agrc/supervisor/compare/3.1.0...v3.1.1) (2025-01-23)
+
+
+### Features
+
+* updated dev tools, fix: non-breaking requests version ([7e19288](https://github.com/agrc/supervisor/commit/7e19288a48692501eb0c792f9f910c90a7c43389))
+
+
+### Dependencies
+
+* **dev:** update pytest-cov requirement from &lt;6.0,&gt;=4.1 to &gt;=4.1,&lt;7.0 ([c38622b](https://github.com/agrc/supervisor/commit/c38622be8103b4083acebf0c272ac88fd9571709))
+
+
+### Documentation
+
+* update project name in install docs ([b9ab82c](https://github.com/agrc/supervisor/commit/b9ab82c5de1ff2ebabc00c5d0256939f7bd4e852))
