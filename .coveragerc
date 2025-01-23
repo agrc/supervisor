@@ -1,7 +1,9 @@
 [run]
 omit =
     # files to omit from coverage. should be sample files etc
-    */connection_sample.py
+    */version.py
+    */example.py
+    */init.py
 
 [report]
 exclude_lines =
