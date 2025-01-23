@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.2](https://github.com/agrc/supervisor/compare/v3.1.1...v3.1.2) (2025-01-23)
+
+
+### Bug Fixes
+
+* install prerequisite for building ([1e2b709](https://github.com/agrc/supervisor/commit/1e2b709607749a62cc0d51145e0a94fbe7bf2d17))
+
 ## [3.1.1](https://github.com/agrc/supervisor/compare/3.1.0...v3.1.1) (2025-01-23)
 
 
