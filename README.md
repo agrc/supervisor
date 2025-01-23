@@ -23,14 +23,14 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
    - `conda activate PROJECT_NAME`
    - `cd c:\root\path\where\you\store\your\code` (ie, `cd c:\gis\git`)
 1. Install supervisor (or add to your project's `setup.py`)
-   - `pip install agrc-supervisor`
+   - `pip install ugrc-supervisor`
 1. In your script's entry point code (usually `main.py`), as early as possible and generally before any arg parsing:
    - (Optional) Set up a logger, which is used to log any errors your code doesn't handle and `Supervisor` catches.
    - Instantiate a `Supervisor` object.
-      - The default behavior replaces the normal exception handler. If you are using logging, pass a logger to ensure the exceptions get logged there.
-      - If you don't want Supervisor to handle exceptions, pass `handle_errors=False` when instantiating.
+     - The default behavior replaces the normal exception handler. If you are using logging, pass a logger to ensure the exceptions get logged there.
+     - If you don't want Supervisor to handle exceptions, pass `handle_errors=False` when instantiating.
    - Instantiate and register the desired `MessageHandler`s with the `Supervisor Object`
-      - Create the appropriate settings dictionaries before creating the `MessageHandler`s
+     - Create the appropriate settings dictionaries before creating the `MessageHandler`s
 1. Build a `MessageDetails` object with subject, message (as a single string), and optional attachments.
 1. Call `.notify()` on the `Supervisor`:
    - In `main.py` (or wherever you instantiated the `Supervisor` object), passing in the MessageDetails object
