@@ -1,7 +1,10 @@
 {
   "bootstrap-sha": "066dc978868cb3caed39abc470ffdfcb5da3b2e2",
+  "last-release-sha": "066dc978868cb3caed39abc470ffdfcb5da3b2e2",
   "release-type": "python",
   "packages": {
-    ".": {}
+    ".": {
+      "extra-files": ["src/supervisor/version.py"]
+    }
   }
 }
