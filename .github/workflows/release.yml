@@ -29,9 +29,6 @@ jobs:
           cache: pip
           cache-dependency-path: setup.py
 
-      - name: 🛞️ Install wheel
-        run: pip install wheel
-
       - name: 📦 Build package
         run: python -m build
 
