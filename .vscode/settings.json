@@ -10,6 +10,7 @@
     "gzipper",
     "instafail",
     "isort",
+    "pipx",
     "pylint",
     "pypa",
     "pypi",
