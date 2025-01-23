@@ -44,7 +44,7 @@ if __name__ == "__main__":
     }
 
     #: Instantiate a new EmailHandler and register it with our Supervisor
-    # sim_sup.add_message_handler(EmailHandler(email_settings, 'agrc-supervisor'))
+    # sim_sup.add_message_handler(EmailHandler(email_settings, 'ugrc-supervisor'))
 
     #: ===============
     #: SendGridHandler
