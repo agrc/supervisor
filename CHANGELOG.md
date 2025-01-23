@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.3](https://github.com/agrc/supervisor/compare/v3.1.2...v3.1.3) (2025-01-23)
+
+
+### Bug Fixes
+
+* separate build from deploy ([876998b](https://github.com/agrc/supervisor/commit/876998b9200045381e8c6b1310ef5119ebe0b88b))
+
 ## [3.1.2](https://github.com/agrc/supervisor/compare/v3.1.1...v3.1.2) (2025-01-23)
 
 
