@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/agrc/supervisor/compare/v3.1.3...v3.2.0) (2025-06-04)
+
+
+### Features
+
+* remove requests pin ([3b26cde](https://github.com/agrc/supervisor/commit/3b26cde150f624dbf74527f7cd70df7c31ad6855))
+
 ## [3.1.3](https://github.com/agrc/supervisor/compare/v3.1.2...v3.1.3) (2025-01-23)
 
 
