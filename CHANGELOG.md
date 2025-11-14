@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.1](https://github.com/agrc/supervisor/compare/v3.2.0...v3.2.1) (2025-11-14)
+
+
+### Dependencies
+
+* novermber dbot and dbot freq ([336c4ff](https://github.com/agrc/supervisor/commit/336c4ff1de388495f64cf5a12dc18d7c6d0d0203))
+
 ## [3.2.0](https://github.com/agrc/supervisor/compare/v3.1.3...v3.2.0) (2025-06-04)
 
 
