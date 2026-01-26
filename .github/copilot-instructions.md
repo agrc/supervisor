@@ -52,7 +52,7 @@ Supervisor is a Python module for monitoring scheduled processes, catching error
 ## Development Workflow
 
 ### Environment Setup
-- Python environment typically cloned from `arcgispro-py3`
+- Standard Python environment (Python 3.x)
 - Install in development mode: `pip install -e ".[tests]"`
 
 ### Dependencies
