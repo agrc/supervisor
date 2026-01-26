@@ -122,7 +122,98 @@ Optionally relies on the `client_name` and `client_version` parameters to report
 
 `message_handlers.SlackHandler`
 
-Not yet implemented. Will be used with Slack's API and message format to post messages to Slack.
+A handler to send notifications to Slack via webhook URLs. Supports custom message formatting through user-provided formatter functions and automatically splits long messages to comply with Slack's message length restrictions.
+
+### Instantiation
+
+Relies on the `slack_settings` parameter to configure the Slack webhook. This dictionary requires:
+
+- `webhook_url`: The Slack incoming webhook URL for your channel (obtained from Slack's webhook configuration)
+
+Optionally supports a `formatter` parameter, which is a callable that accepts `(message_details, client_name, client_version)` and returns a dict formatted for Slack's webhook API. If not provided, a default formatter is used that creates a simple text message with markdown formatting.
+
+The `max_length` parameter (default: 3000) sets the maximum character length for a single Slack message. Messages exceeding this length will be automatically split into multiple messages with part numbering.
+
+Optionally relies on the `client_name` and `client_version` parameters to report the client program's name and version number in the message.
+
+### Custom Formatter
+
+The formatter function should accept three parameters:
+- `message_details` (MessageDetails): The message to format
+- `client_name` (str): Name of the client application
+- `client_version` (str): Version of the client application
+
+It should return a dict compatible with Slack's webhook API, typically containing at minimum a `text` field. You can also include `blocks` for more complex formatting using Slack's Block Kit.
+
+Example custom formatter:
+```python
+def my_formatter(message_details, client_name, client_version):
+    return {
+        "text": f"{message_details.subject}: {message_details.message}",
+        "blocks": [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": message_details.subject
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": message_details.message
+                }
+            }
+        ]
+    }
+
+slack_handler = SlackHandler(slack_settings, formatter=my_formatter)
+```
+
+### Message Splitting
+
+When a formatted message's `text` field exceeds `max_length`, the handler will automatically split the message into multiple parts. Each part will include:
+- The original subject with part numbering (e.g., "Subject (Part 1/3)")
+- A chunk of the message content
+- The client name and version footer
+
+This ensures long error messages or logs can be successfully delivered to Slack without truncation.
+
+### Supported MessageDetail Attributes
+
+#### Required
+
+- `message`: The message to send formatted as a single string
+- `subject`: Message subject (used in the formatted output)
+
+#### Not Supported
+
+- `attachments`: File attachments are not currently supported for Slack messages
+
+### Example Usage
+
+```python
+from supervisor.message_handlers import SlackHandler
+from supervisor.models import Supervisor, MessageDetails
+
+# Set up Slack handler
+slack_settings = {
+    'webhook_url': 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+}
+supervisor = Supervisor()
+supervisor.add_message_handler(SlackHandler(
+    slack_settings,
+    client_name='my_project',
+    client_version='1.0.0'
+))
+
+# Send a notification
+message = MessageDetails()
+message.subject = 'Job Complete'
+message.message = 'Processing completed successfully'
+supervisor.notify(message)
+```
 
 ## ConsoleHandler
 
