@@ -17,6 +17,7 @@ from tempfile import TemporaryDirectory
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import python_http_client
+import requests
 import sendgrid
 from sendgrid.helpers.mail import Attachment, Content, Email, FileContent, FileName, FileType, Mail, To
 
@@ -565,12 +566,8 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             Message payload to send
         """
         try:
-            import requests
-
             response = requests.post(webhook_url, json=payload, timeout=10)
             response.raise_for_status()
-        except ImportError:
-            warnings.warn("requests library not installed. Cannot send Slack messages. Install with: pip install requests")
         except Exception as err:  # pylint: disable=broad-except
             warnings.warn(f"Error posting to Slack: {err}")
 
