@@ -437,6 +437,9 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Format and send message to Slack, splitting if necessary
     """
 
+    #: Buffer for part numbering overhead in split messages (e.g., " (Part 1/10)")
+    PART_NUMBERING_BUFFER = 50
+
     def __init__(
         self, slack_settings, formatter=None, max_length=3000, client_name="unknown client", client_version="not specified"
     ):
@@ -523,7 +526,7 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         #: Calculate header size (subject + formatting + version info)
         header = f"*{message_details.subject}*\n\n"
         footer = f"\n\n_{self.client_name} version: {self.client_version}_"
-        overhead = len(header) + len(footer) + 50  # 50 chars buffer for part numbering
+        overhead = len(header) + len(footer) + self.PART_NUMBERING_BUFFER
 
         #: Calculate available space for actual message content
         chunk_size = self.max_length - overhead
