@@ -415,15 +415,161 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
 
 class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
-    """
-    Send a notification to Slack
+    """Send a notification to Slack via webhook URL.
+
+    Attributes
+    ----------
+    slack_settings : dict
+        'webhook_url' (str): Slack webhook URL for posting messages
+    formatter : callable, optional
+        Function that takes a MessageDetails object and returns a dict for Slack's API.
+        If not provided, uses a default formatter that creates a simple text message.
+    max_length : int
+        Maximum character length for a single Slack message (default: 3000)
+    client_name : str
+        pip-install name of the client project for version reporting
+    client_version : str
+        client project's version for version reporting
+
+    Methods
+    -------
+    send_message(message_details)
+        Format and send message to Slack, splitting if necessary
     """
 
-    def __init__(self, details):
-        pass
+    def __init__(
+        self, slack_settings, formatter=None, max_length=3000, client_name="unknown client", client_version="not specified"
+    ):
+        self.slack_settings = slack_settings
+        self.formatter = formatter if formatter else self._default_formatter
+        self.max_length = max_length
+        self.client_name = client_name
+        self.client_version = client_version
 
     def send_message(self, message_details):
-        pass
+        """Format and send message to Slack, splitting if necessary.
+
+        Parameters
+        ----------
+        message_details : MessageDetails
+            Must have .message, .subject; .attachments are not currently supported
+        """
+
+        #: Verify webhook URL exists
+        try:
+            webhook_url = self.slack_settings["webhook_url"]
+        except KeyError:
+            warnings.warn("Required Slack webhook_url does not exist. No message sent.")
+            return
+
+        if not webhook_url:
+            warnings.warn("Slack webhook_url exists but is empty. No message sent.")
+            return
+
+        #: Format the message using the provided or default formatter
+        try:
+            formatted_payload = self.formatter(message_details, self.client_name, self.client_version)
+        except Exception as err:  # pylint: disable=broad-except
+            warnings.warn(f"Error formatting message for Slack: {err}. No message sent.")
+            return
+
+        #: Extract text content to check length
+        message_text = formatted_payload.get("text", "")
+
+        #: If message is short enough, send as-is
+        if len(message_text) <= self.max_length:
+            self._post_to_slack(webhook_url, formatted_payload)
+        else:
+            #: Split message into chunks and send separately
+            self._send_split_messages(webhook_url, message_text, message_details)
+
+    def _default_formatter(self, message_details, client_name, client_version):
+        """Default formatter for Slack messages.
+
+        Parameters
+        ----------
+        message_details : MessageDetails
+            Must have .message and .subject
+        client_name : str
+            Name of the client project
+        client_version : str
+            Version of the client project
+
+        Returns
+        -------
+        dict
+            Slack message payload with text field
+        """
+        #: Combine subject and message
+        full_message = f"*{message_details.subject}*\n\n{message_details.message}"
+
+        #: Add version info
+        full_message += f"\n\n_{client_name} version: {client_version}_"
+
+        return {"text": full_message}
+
+    def _send_split_messages(self, webhook_url, message_text, message_details):
+        """Split a long message into chunks and send each separately.
+
+        Parameters
+        ----------
+        webhook_url : str
+            Slack webhook URL
+        message_text : str
+            Full message text to split
+        message_details : MessageDetails
+            Original message details (for subject)
+        """
+        #: Calculate header size (subject + formatting + version info)
+        header = f"*{message_details.subject}*\n\n"
+        footer = f"\n\n_{self.client_name} version: {self.client_version}_"
+        overhead = len(header) + len(footer) + 50  # 50 chars buffer for part numbering
+
+        #: Calculate available space for actual message content
+        chunk_size = self.max_length - overhead
+
+        if chunk_size <= 0:
+            warnings.warn("Subject and version info too long for Slack message splitting. No message sent.")
+            return
+
+        #: Split message into chunks
+        message_only = message_details.message
+        chunks = [message_only[i : i + chunk_size] for i in range(0, len(message_only), chunk_size)]
+
+        #: Send each chunk
+        for i, chunk in enumerate(chunks, 1):
+            part_info = f" (Part {i}/{len(chunks)})" if len(chunks) > 1 else ""
+            chunk_message = f"{header}{chunk}{footer}"
+
+            #: Add part info to subject if multiple parts
+            if part_info:
+                chunk_message = chunk_message.replace(
+                    f"*{message_details.subject}*", f"*{message_details.subject}{part_info}*"
+                )
+
+            payload = {"text": chunk_message}
+            self._post_to_slack(webhook_url, payload)
+
+    @staticmethod
+    def _post_to_slack(webhook_url, payload):
+        """Post a message payload to Slack webhook.
+
+        Parameters
+        ----------
+        webhook_url : str
+            Slack webhook URL
+        payload : dict
+            Message payload to send
+        """
+        try:
+            import requests
+
+            response = requests.post(webhook_url, json=payload, timeout=10)
+            response.raise_for_status()
+        except ImportError:
+            warnings.warn("requests library not installed. Cannot send Slack messages. Install with: pip install requests")
+        except Exception as err:  # pylint: disable=broad-except
+            warnings.warn(f"Error posting to Slack: {err}")
 
 
 class ConsoleHandler(MessageHandler):  # pylint: disable=too-few-public-methods

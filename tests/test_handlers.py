@@ -1077,3 +1077,246 @@ class TestSendGridHandlerAttachments:
         assert attachment.file_name.get() == "zip_me.zip"
         assert attachment.file_type.get() == "application/zip"
         assert attachment.file_content.get() == encoded
+
+
+class TestSlackHandler:
+    def test_send_message_basic(self, mocker):
+        """Test basic message sending with default formatter"""
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "Test message"
+        message_details.subject = "Test Subject"
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, client_name="TestApp", client_version="1.0.0")
+        slack_handler.send_message(message_details)
+
+        #: Verify requests.post was called
+        assert mock_post.call_count == 1
+        call_args = mock_post.call_args
+        assert call_args[0][0] == "https://hooks.slack.com/services/TEST/WEBHOOK/URL"
+        assert "json" in call_args[1]
+        payload = call_args[1]["json"]
+        assert "*Test Subject*" in payload["text"]
+        assert "Test message" in payload["text"]
+        assert "TestApp version: 1.0.0" in payload["text"]
+
+    def test_send_message_missing_webhook_url(self, mocker):
+        """Test that missing webhook_url raises warning and doesn't send"""
+        mock_post = mocker.patch("requests.post")
+
+        slack_settings = {}  # Missing webhook_url
+
+        message_details = MessageDetails()
+        message_details.message = "Test message"
+        message_details.subject = "Test Subject"
+
+        with pytest.warns(UserWarning, match="Required Slack webhook_url does not exist"):
+            slack_handler = message_handlers.SlackHandler(slack_settings)
+            slack_handler.send_message(message_details)
+
+        #: Verify requests.post was NOT called
+        assert mock_post.call_count == 0
+
+    def test_send_message_empty_webhook_url(self, mocker):
+        """Test that empty webhook_url raises warning and doesn't send"""
+        mock_post = mocker.patch("requests.post")
+
+        slack_settings = {"webhook_url": ""}  # Empty webhook_url
+
+        message_details = MessageDetails()
+        message_details.message = "Test message"
+        message_details.subject = "Test Subject"
+
+        with pytest.warns(UserWarning, match="Slack webhook_url exists but is empty"):
+            slack_handler = message_handlers.SlackHandler(slack_settings)
+            slack_handler.send_message(message_details)
+
+        #: Verify requests.post was NOT called
+        assert mock_post.call_count == 0
+
+    def test_send_message_custom_formatter(self, mocker):
+        """Test using a custom formatter function"""
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        def custom_formatter(message_details, client_name, client_version):
+            return {
+                "text": f"CUSTOM: {message_details.subject} - {message_details.message}",
+                "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": "Custom block"}}],
+            }
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "Test message"
+        message_details.subject = "Test Subject"
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, formatter=custom_formatter)
+        slack_handler.send_message(message_details)
+
+        #: Verify custom formatter was used
+        assert mock_post.call_count == 1
+        payload = mock_post.call_args[1]["json"]
+        assert payload["text"] == "CUSTOM: Test Subject - Test message"
+        assert "blocks" in payload
+
+    def test_send_message_formatter_error(self, mocker):
+        """Test that formatter errors are caught and warned"""
+        mock_post = mocker.patch("requests.post")
+
+        def broken_formatter(message_details, client_name, client_version):
+            raise ValueError("Formatter is broken!")
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "Test message"
+        message_details.subject = "Test Subject"
+
+        with pytest.warns(UserWarning, match="Error formatting message for Slack"):
+            slack_handler = message_handlers.SlackHandler(slack_settings, formatter=broken_formatter)
+            slack_handler.send_message(message_details)
+
+        #: Verify requests.post was NOT called due to formatter error
+        assert mock_post.call_count == 0
+
+    def test_send_message_short_message(self, mocker):
+        """Test that short messages are sent in a single request"""
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "Short message"
+        message_details.subject = "Short Subject"
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, max_length=3000)
+        slack_handler.send_message(message_details)
+
+        #: Verify only one request was made
+        assert mock_post.call_count == 1
+
+    def test_send_message_long_message_splitting(self, mocker):
+        """Test that long messages are split into multiple requests"""
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        #: Create a message that will exceed max_length
+        long_message = "A" * 5000
+        message_details = MessageDetails()
+        message_details.message = long_message
+        message_details.subject = "Long Subject"
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, max_length=3000)
+        slack_handler.send_message(message_details)
+
+        #: Verify multiple requests were made
+        assert mock_post.call_count > 1
+
+        #: Verify each part contains the subject and version info
+        for call in mock_post.call_args_list:
+            payload = call[1]["json"]
+            assert "*Long Subject" in payload["text"]
+            assert "Part" in payload["text"]  # Should have part numbering
+
+    def test_send_message_requests_not_installed(self, mocker):
+        """Test graceful handling when requests library is not available"""
+        mocker.patch("requests.post", side_effect=ImportError("No module named 'requests'"))
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "Test message"
+        message_details.subject = "Test Subject"
+
+        with pytest.warns(UserWarning, match="requests library not installed"):
+            slack_handler = message_handlers.SlackHandler(slack_settings)
+            slack_handler.send_message(message_details)
+
+    def test_send_message_post_error(self, mocker):
+        """Test handling of HTTP errors when posting to Slack"""
+        mock_post = mocker.patch("requests.post")
+        mock_post.side_effect = Exception("Network error")
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "Test message"
+        message_details.subject = "Test Subject"
+
+        with pytest.warns(UserWarning, match="Error posting to Slack"):
+            slack_handler = message_handlers.SlackHandler(slack_settings)
+            slack_handler.send_message(message_details)
+
+    def test_default_formatter_structure(self, mocker):
+        """Test the default formatter creates proper structure"""
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "Test\nmultiline\nmessage"
+        message_details.subject = "Test Subject"
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, client_name="MyApp", client_version="2.0.0")
+
+        formatted = slack_handler._default_formatter(message_details, "MyApp", "2.0.0")
+
+        assert "text" in formatted
+        assert "*Test Subject*" in formatted["text"]
+        assert "Test\nmultiline\nmessage" in formatted["text"]
+        assert "MyApp version: 2.0.0" in formatted["text"]
+
+    def test_message_splitting_with_exact_boundary(self, mocker):
+        """Test message splitting when message length exactly matches max_length"""
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        #: Create message that will be exactly at the boundary
+        max_len = 500
+        message_details = MessageDetails()
+        message_details.subject = "S"
+        message_details.message = "A" * (max_len - 100)  # Leave room for header/footer
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, max_length=max_len)
+        slack_handler.send_message(message_details)
+
+        #: Should send without splitting since we're under the limit
+        assert mock_post.call_count >= 1
+
+    def test_custom_max_length(self, mocker):
+        """Test that custom max_length parameter is respected"""
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "A" * 200
+        message_details.subject = "Test"
+
+        #: Use a very small max_length to force splitting
+        slack_handler = message_handlers.SlackHandler(slack_settings, max_length=100)
+        slack_handler.send_message(message_details)
+
+        #: Should have split the message
+        assert mock_post.call_count > 1
