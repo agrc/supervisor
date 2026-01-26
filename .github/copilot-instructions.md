@@ -23,7 +23,7 @@ Supervisor is a Python module for monitoring scheduled processes, catching error
 3. **MessageDetails** (`models.py`): Data structure for messages with:
    - `message`: The text content
    - `subject`: Message subject
-   - `attachments`: List of file paths to attach (automatically gzipped or zipped)
+   - `attachments`: File path(s) to attach (supports single path or list; automatically gzipped or zipped)
 
 ## Code Style and Conventions
 
@@ -103,8 +103,9 @@ Supervisor is a Python module for monitoring scheduled processes, catching error
 - Update version in `src/supervisor/version.py` for releases
 
 ### File Operations
-- Use `pathlib.Path` for all file operations
-- Support both string paths and Path objects as input
+- Prefer `pathlib.Path` for internal file operations
+- **Always** support both string paths and Path objects as input for backwards compatibility
+- Convert string inputs to Path objects when needed: `Path(attachment)`
 - Check if files/directories exist before processing attachments
 - Use context managers for file operations
 
