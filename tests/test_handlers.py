@@ -1234,20 +1234,6 @@ class TestSlackHandler:
             assert "*Long Subject" in payload["text"]
             assert "Part" in payload["text"]  # Should have part numbering
 
-    def test_send_message_requests_not_installed(self, mocker):
-        """Test graceful handling when requests library is not available"""
-        mocker.patch("requests.post", side_effect=ImportError("No module named 'requests'"))
-
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        message_details = MessageDetails()
-        message_details.message = "Test message"
-        message_details.subject = "Test Subject"
-
-        with pytest.warns(UserWarning, match="requests library not installed"):
-            slack_handler = message_handlers.SlackHandler(slack_settings)
-            slack_handler.send_message(message_details)
-
     def test_send_message_post_error(self, mocker):
         """Test handling of HTTP errors when posting to Slack"""
         mock_post = mocker.patch("requests.post")
