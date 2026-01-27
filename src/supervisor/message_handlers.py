@@ -474,11 +474,16 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             warnings.warn(f"Error formatting message for Slack: {err}. No message sent.")
             return
 
-        #: Extract text content to check length
+        #: Extract text content and blocks to check limits
         message_text = formatted_payload.get("text", "")
+        message_blocks = formatted_payload.get("blocks", [])
 
-        #: If message is short enough, send as-is
-        if len(message_text) <= self.max_length:
+        #: Check if we need to split based on text length or block count
+        #: Slack limits: 3000 chars for text (webhook), 50 blocks max
+        needs_split = len(message_text) > self.max_length or len(message_blocks) > 50
+
+        #: If message fits within limits, send as-is
+        if not needs_split:
             self._post_to_slack(webhook_url, formatted_payload)
         else:
             #: Split message into chunks and send separately

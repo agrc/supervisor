@@ -1337,3 +1337,59 @@ class TestSlackHandler:
 
         #: Verify no messages were sent due to the warning
         assert mock_post.call_count == 0
+
+    def test_message_with_blocks_under_limit(self, mocker):
+        """Test that messages with blocks under 50 are sent as-is"""
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        def formatter_with_blocks(message_details, client_name, client_version):
+            #: Create 30 blocks (under the 50 limit)
+            blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": f"Block {i}"}} for i in range(30)]
+            return {"text": "Message with blocks", "blocks": blocks}
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "Test message"
+        message_details.subject = "Test"
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, formatter=formatter_with_blocks)
+        slack_handler.send_message(message_details)
+
+        #: Should send as-is (not split) since under 50 blocks
+        assert mock_post.call_count == 1
+        payload = mock_post.call_args[1]["json"]
+        assert len(payload.get("blocks", [])) == 30
+
+    def test_message_with_blocks_over_limit(self, mocker):
+        """Test that messages with over 50 blocks trigger splitting"""
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        def formatter_with_many_blocks(message_details, client_name, client_version):
+            #: Create 60 blocks (over the 50 limit)
+            blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": f"Block {i}"}} for i in range(60)]
+            return {"text": "Message with many blocks", "blocks": blocks}
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "A" * 5000  # Long message to ensure splitting
+        message_details.subject = "Test"
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, formatter=formatter_with_many_blocks, max_length=3000)
+        slack_handler.send_message(message_details)
+
+        #: Should split the message due to block count exceeding 50
+        #: Falls back to text-based splitting
+        assert mock_post.call_count > 1
+        
+        #: Verify that the sent messages don't have blocks (fallback to text)
+        for call in mock_post.call_args_list:
+            payload = call[1]["json"]
+            assert "blocks" not in payload or len(payload.get("blocks", [])) == 0

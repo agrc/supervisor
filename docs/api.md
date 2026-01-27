@@ -173,12 +173,16 @@ slack_handler = SlackHandler(slack_settings, formatter=my_formatter)
 
 ### Message Splitting
 
-When a formatted message's `text` field exceeds `max_length`, the handler will automatically split the message into multiple parts:
+The handler will automatically split messages when they exceed Slack's limits:
+
+**Text Length Limit**: When a formatted message's `text` field exceeds `max_length` (default: 3000 characters), the message is split into multiple parts:
 - The first message includes the subject header
 - Middle messages (if any) contain only the message content
 - The last message includes the client name and version footer
 
-This ensures long error messages or logs can be successfully delivered to Slack without truncation.
+**Block Count Limit**: When a formatted message contains more than 50 blocks (Slack's maximum), the handler automatically falls back to text-based splitting, discarding the blocks and using simple text messages instead.
+
+This ensures long error messages, logs, or complex block-based messages can be successfully delivered to Slack without truncation or API errors.
 
 ### Supported MessageDetail Attributes
 
