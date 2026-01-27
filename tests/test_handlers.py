@@ -1228,11 +1228,18 @@ class TestSlackHandler:
         #: Verify multiple requests were made
         assert mock_post.call_count > 1
 
-        #: Verify each part contains the subject and version info
-        for call in mock_post.call_args_list:
-            payload = call[1]["json"]
-            assert "*Long Subject" in payload["text"]
-            assert "Part" in payload["text"]  # Should have part numbering
+        #: Verify first message has header, last has footer
+        first_call_payload = mock_post.call_args_list[0][1]["json"]
+        last_call_payload = mock_post.call_args_list[-1][1]["json"]
+        
+        assert "*Long Subject*" in first_call_payload["text"]
+        assert "version:" in last_call_payload["text"]
+        
+        #: Verify middle messages (if any) don't have header or footer
+        if mock_post.call_count > 2:
+            middle_call_payload = mock_post.call_args_list[1][1]["json"]
+            assert "*Long Subject*" not in middle_call_payload["text"]
+            assert "version:" not in middle_call_payload["text"]
 
     def test_send_message_post_error(self, mocker):
         """Test handling of HTTP errors when posting to Slack"""

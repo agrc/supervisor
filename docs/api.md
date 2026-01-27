@@ -173,10 +173,10 @@ slack_handler = SlackHandler(slack_settings, formatter=my_formatter)
 
 ### Message Splitting
 
-When a formatted message's `text` field exceeds `max_length`, the handler will automatically split the message into multiple parts. Each part will include:
-- The original subject with part numbering (e.g., "Subject (Part 1/3)")
-- A chunk of the message content
-- The client name and version footer
+When a formatted message's `text` field exceeds `max_length`, the handler will automatically split the message into multiple parts:
+- The first message includes the subject header
+- Middle messages (if any) contain only the message content
+- The last message includes the client name and version footer
 
 This ensures long error messages or logs can be successfully delivered to Slack without truncation.
 

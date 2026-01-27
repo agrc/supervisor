@@ -438,9 +438,6 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Format and send message to Slack, splitting if necessary
     """
 
-    #: Buffer for part numbering overhead in split messages (e.g., " (Part 1/10)")
-    PART_NUMBERING_BUFFER = 50
-
     def __init__(
         self, slack_settings, formatter=None, max_length=3000, client_name="unknown client", client_version="not specified"
     ):
@@ -485,7 +482,7 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             self._post_to_slack(webhook_url, formatted_payload)
         else:
             #: Split message into chunks and send separately
-            self._send_split_messages(webhook_url, message_text, message_details)
+            self._send_split_messages(webhook_url, message_details)
 
     def _default_formatter(self, message_details, client_name, client_version):
         """Default formatter for Slack messages.
@@ -512,25 +509,24 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
         return {"text": full_message}
 
-    def _send_split_messages(self, webhook_url, message_text, message_details):
+    def _send_split_messages(self, webhook_url, message_details):
         """Split a long message into chunks and send each separately.
 
         Parameters
         ----------
         webhook_url : str
             Slack webhook URL
-        message_text : str
-            Full message text to split
         message_details : MessageDetails
-            Original message details (for subject)
+            Original message details (for subject and message)
         """
-        #: Calculate header size (subject + formatting + version info)
+        #: Calculate header and footer sizes for overhead calculation
         header = f"*{message_details.subject}*\n\n"
         footer = f"\n\n_{self.client_name} version: {self.client_version}_"
-        overhead = len(header) + len(footer) + self.PART_NUMBERING_BUFFER
-
-        #: Calculate available space for actual message content
-        chunk_size = self.max_length - overhead
+        
+        #: First message has header, last has footer, middle messages have neither
+        #: Calculate chunk size based on max overhead (header + footer for edge cases)
+        max_overhead = len(header) + len(footer)
+        chunk_size = self.max_length - max_overhead
 
         if chunk_size <= 0:
             warnings.warn("Subject and version info too long for Slack message splitting. No message sent.")
@@ -541,15 +537,15 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         chunks = [message_only[i : i + chunk_size] for i in range(0, len(message_only), chunk_size)]
 
         #: Send each chunk
-        for i, chunk in enumerate(chunks, 1):
-            part_info = f" (Part {i}/{len(chunks)})" if len(chunks) > 1 else ""
-            chunk_message = f"{header}{chunk}{footer}"
-
-            #: Add part info to subject if multiple parts
-            if part_info:
-                chunk_message = chunk_message.replace(
-                    f"*{message_details.subject}*", f"*{message_details.subject}{part_info}*"
-                )
+        for i, chunk in enumerate(chunks):
+            #: First message gets header, last message gets footer
+            if i == 0:
+                chunk_message = f"{header}{chunk}"
+            else:
+                chunk_message = chunk
+            
+            if i == len(chunks) - 1:
+                chunk_message += footer
 
             payload = {"text": chunk_message}
             self._post_to_slack(webhook_url, payload)
