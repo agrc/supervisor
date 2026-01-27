@@ -1313,3 +1313,27 @@ class TestSlackHandler:
 
         #: Should have split the message
         assert mock_post.call_count > 1
+
+    def test_subject_version_too_long_for_splitting(self, mocker):
+        """Test warning when subject and version info exceed max_length"""
+        mock_post = mocker.patch("requests.post")
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.message = "A" * 200
+        message_details.subject = "Very Long Subject " * 10  # Make subject very long
+
+        #: Use small max_length with long subject and version to trigger warning
+        slack_handler = message_handlers.SlackHandler(
+            slack_settings, 
+            max_length=50,  # Very small max_length
+            client_name="VeryLongClientNameThatExceedsLimit",
+            client_version="1.0.0.0.0.0.0.0"
+        )
+
+        with pytest.warns(UserWarning, match="Subject and version info too long for Slack message splitting"):
+            slack_handler.send_message(message_details)
+
+        #: Verify no messages were sent due to the warning
+        assert mock_post.call_count == 0
