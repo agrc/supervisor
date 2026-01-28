@@ -1080,9 +1080,9 @@ class TestSendGridHandlerAttachments:
 
 
 class TestSlackHandler:
-    def test_send_message_with_blocks(self, mocker):
-        """Test sending message with Slack blocks"""
-        from supervisor.models import SectionBlock, ContextBlock
+    def test_send_message_with_message_object(self, mocker):
+        """Test sending message with Slack Message object"""
+        from supervisor.slack import Message, SectionBlock, ContextBlock
         
         mock_post = mocker.patch("requests.post")
         mock_response = mocker.Mock()
@@ -1092,11 +1092,10 @@ class TestSlackHandler:
         slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
 
         message_details = MessageDetails()
-        message_details.subject = "Test Subject"
-        message_details.slack_blocks = [
-            SectionBlock("Hello from Slack!"),
-            ContextBlock(["Context info"])
-        ]
+        slack_message = Message(text="Test Subject")
+        slack_message.add(SectionBlock("Hello from Slack!"))
+        slack_message.add(ContextBlock(["Context info"]))
+        message_details.slack_messages = slack_message
 
         slack_handler = message_handlers.SlackHandler(slack_settings, client_name="TestApp", client_version="1.0.0")
         slack_handler.send_message(message_details)
@@ -1210,7 +1209,7 @@ class TestSlackHandler:
 
     def test_send_message_many_blocks_splitting(self, mocker):
         """Test that messages with over 50 blocks are split"""
-        from supervisor.models import SectionBlock
+        from supervisor.slack import Message, SectionBlock
         
         mock_post = mocker.patch("requests.post")
         mock_response = mocker.Mock()
@@ -1220,9 +1219,11 @@ class TestSlackHandler:
         slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
 
         message_details = MessageDetails()
-        message_details.subject = "Test"
+        slack_message = Message(text="Test")
         #: Create 60 blocks (over the 50 limit)
-        message_details.slack_blocks = [SectionBlock(f"Block {i}") for i in range(60)]
+        for i in range(60):
+            slack_message.add(SectionBlock(f"Block {i}"))
+        message_details.slack_messages = slack_message
 
         slack_handler = message_handlers.SlackHandler(slack_settings)
         slack_handler.send_message(message_details)
@@ -1236,7 +1237,7 @@ class TestSlackHandler:
 
     def test_send_message_few_blocks_no_split(self, mocker):
         """Test that messages with blocks under 50 are sent as-is"""
-        from supervisor.models import SectionBlock
+        from supervisor.slack import Message, SectionBlock
         
         mock_post = mocker.patch("requests.post")
         mock_response = mocker.Mock()
@@ -1246,9 +1247,11 @@ class TestSlackHandler:
         slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
 
         message_details = MessageDetails()
-        message_details.subject = "Test"
+        slack_message = Message(text="Test")
         #: Create 30 blocks (under the 50 limit)
-        message_details.slack_blocks = [SectionBlock(f"Block {i}") for i in range(30)]
+        for i in range(30):
+            slack_message.add(SectionBlock(f"Block {i}"))
+        message_details.slack_messages = slack_message
 
         slack_handler = message_handlers.SlackHandler(slack_settings)
         slack_handler.send_message(message_details)
@@ -1283,7 +1286,7 @@ class TestSlackHandler:
 
     def test_block_types(self):
         """Test that Block Kit objects can be created and resolved"""
-        from supervisor.models import SectionBlock, ContextBlock, DividerBlock, Text
+        from supervisor.slack import SectionBlock, ContextBlock, DividerBlock, Text
         
         #: Test SectionBlock
         section = SectionBlock("Test text")
@@ -1313,21 +1316,24 @@ class TestSlackHandler:
         assert resolved_text["type"] == "mrkdwn"
         assert resolved_text["text"] == "Test"
 
-    def test_message_details_slack_blocks_property(self):
-        """Test that MessageDetails has slack_blocks property"""
-        from supervisor.models import SectionBlock
+    def test_message_details_slack_messages_property(self):
+        """Test that MessageDetails has slack_messages property"""
+        from supervisor.slack import Message, SectionBlock
         
         message_details = MessageDetails()
         
         #: Test initial state
-        assert message_details.slack_blocks == []
+        assert message_details.slack_messages == []
         
-        #: Test adding single block
-        block1 = SectionBlock("Block 1")
-        message_details.slack_blocks = block1
-        assert len(message_details.slack_blocks) == 1
+        #: Test adding single message
+        msg1 = Message(text="Message 1")
+        msg1.add(SectionBlock("Block 1"))
+        message_details.slack_messages = msg1
+        assert len(message_details.slack_messages) == 1
         
-        #: Test adding list of blocks
-        blocks = [SectionBlock("Block 2"), SectionBlock("Block 3")]
-        message_details.slack_blocks = blocks
-        assert len(message_details.slack_blocks) == 3
+        #: Test adding list of messages
+        msg2 = Message(text="Message 2")
+        msg3 = Message(text="Message 3")
+        messages = [msg2, msg3]
+        message_details.slack_messages = messages
+        assert len(message_details.slack_messages) == 3

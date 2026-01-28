@@ -446,7 +446,7 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Parameters
         ----------
         message_details : MessageDetails
-            Must have .slack_blocks (list of Block objects) or .message and .subject for fallback
+            Must have .slack_messages (list of Message objects) or .message and .subject for fallback
         """
 
         #: Verify webhook URL exists
@@ -460,40 +460,33 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             warnings.warn("Slack webhook_url exists but is empty. No message sent.")
             return
 
-        #: Use slack_blocks if available, otherwise fall back to message text
-        if message_details.slack_blocks and len(message_details.slack_blocks) > 0:
-            self._send_block_messages(webhook_url, message_details)
+        #: Use slack_messages if available, otherwise fall back to message text
+        if message_details.slack_messages and len(message_details.slack_messages) > 0:
+            self._send_slack_messages(webhook_url, message_details)
         else:
             #: Fall back to text-based message
             self._send_text_messages(webhook_url, message_details)
 
-    def _send_block_messages(self, webhook_url, message_details):
-        """Send messages using Slack blocks with proper splitting.
+    def _send_slack_messages(self, webhook_url, message_details):
+        """Send messages using Slack Message objects with proper splitting.
 
         Parameters
         ----------
         webhook_url : str
             Slack webhook URL
         message_details : MessageDetails
-            Message details with slack_blocks populated
+            Message details with slack_messages populated
         """
-        from .models import split_blocks, MAX_BLOCKS
-
-        blocks = message_details.slack_blocks
-
-        #: Split blocks if they exceed the 50 block limit
-        if len(blocks) > MAX_BLOCKS:
-            block_chunks = split_blocks(blocks, MAX_BLOCKS)
-        else:
-            block_chunks = [blocks]
-
-        #: Send each chunk
-        for blocks_chunk in block_chunks:
-            payload = {
-                "text": message_details.subject if message_details.subject else "Notification",
-                "blocks": [block._resolve() for block in blocks_chunk]
-            }
-            self._post_to_slack(webhook_url, payload)
+        #: Send each message (Message class handles block splitting internally)
+        for slack_message in message_details.slack_messages:
+            #: Get message payloads (may be split if >50 blocks)
+            message_payloads = slack_message.get_messages()
+            
+            #: Send each payload
+            for payload_str in message_payloads:
+                import json
+                payload = json.loads(payload_str)
+                self._post_to_slack(webhook_url, payload)
 
     def _send_text_messages(self, webhook_url, message_details):
         """Send messages using plain text with proper splitting.
