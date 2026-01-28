@@ -5,167 +5,8 @@ This module holds the classes used by supervisor
 import os
 import sys
 import traceback
-from abc import ABC, abstractmethod
-from enum import Enum
-from json import dumps
 
 from .message_handlers import MessageHandler
-
-#: Slack Block Kit constants
-MAX_BLOCKS = 50
-MAX_CONTEXT_ELEMENTS = 10
-MAX_SECTION_FIELD_ELEMENTS = 10
-MAX_LENGTH_SECTION = 3000
-MAX_LENGTH_SECTION_FIELD = 2000
-
-
-def split_blocks(arr, size):
-    """Split an array into chunks of specified size
-    
-    Parameters
-    ----------
-    arr : list
-        Array to split
-    size : int
-        Size of each chunk
-        
-    Returns
-    -------
-    list
-        List of chunks
-    """
-    result = []
-    while len(arr) > size:
-        piece = arr[:size]
-        result.append(piece)
-        arr = arr[size:]
-
-    result.append(arr)
-
-    return result
-
-
-class BlockType(Enum):
-    """Available block type enums for Slack Block Kit"""
-
-    SECTION = "section"
-    DIVIDER = "divider"
-    CONTEXT = "context"
-
-
-class Block(ABC):
-    """Base block containing attributes and behavior common to all blocks
-    
-    Block is an abstract class and cannot be sent directly.
-    """
-
-    def __init__(self, block):
-        self.type = block
-
-    def _attributes(self):
-        return {"type": self.type.value}
-
-    @abstractmethod
-    def _resolve(self):
-        """Resolve the block to a dictionary for Slack API"""
-
-    def __repr__(self):
-        return dumps(self._resolve(), indent=2)
-
-
-class Text:
-    """A text class formatted using Slack's markdown syntax"""
-
-    def __init__(self, text):
-        self.text = text
-
-    def _resolve(self):
-        text = {
-            "type": "mrkdwn",
-            "text": self.text,
-        }
-
-        return text
-
-    @staticmethod
-    def to_text(text, max_length=None):
-        """Convert text to Text object with optional length limit
-        
-        Parameters
-        ----------
-        text : str
-            Text to convert
-        max_length : int, optional
-            Maximum length for the text
-            
-        Returns
-        -------
-        Text
-            Text object
-        """
-        if max_length and len(text) > max_length:
-            text = text[:max_length]
-
-        return Text(text=text)
-
-    def __str__(self):
-        return dumps(self._resolve(), indent=2)
-
-
-class SectionBlock(Block):
-    """A section is one of the most flexible blocks available"""
-
-    def __init__(self, text=None, fields=None):
-        super().__init__(block=BlockType.SECTION)
-        self.fields = []
-        self.text = None
-
-        if text is not None:
-            self.text = Text.to_text(text, MAX_LENGTH_SECTION)
-        if fields and len(fields) > 0:
-            self.fields = [Text.to_text(field, MAX_LENGTH_SECTION_FIELD) for field in fields]
-
-    def _resolve(self):
-        section = self._attributes()
-
-        if self.text:
-            section["text"] = self.text._resolve()
-
-        if self.fields and len(self.fields) > 0:
-            section["fields"] = [field._resolve() for field in self.fields]
-
-        return section
-
-
-class ContextBlock(Block):
-    """Displays message context. Typically used after a section"""
-
-    def __init__(self, elements):
-        super().__init__(block=BlockType.CONTEXT)
-
-        self.elements = []
-
-        for element in elements:
-            self.elements.append(Text.to_text(element, MAX_LENGTH_SECTION_FIELD))
-
-        if len(self.elements) > MAX_CONTEXT_ELEMENTS:
-            raise ValueError("Context blocks can hold a maximum of ten elements")
-
-    def _resolve(self):
-        context = self._attributes()
-        context["elements"] = [element._resolve() for element in self.elements]
-
-        return context
-
-
-class DividerBlock(Block):
-    """A content divider like an <hr>"""
-
-    def __init__(self):
-        super().__init__(block=BlockType.DIVIDER)
-
-    def _resolve(self):
-        return self._attributes()
 
 
 class Supervisor:
@@ -266,8 +107,8 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
         Strings or Paths to any attachments, including log files
     subject : str
         The message subject
-    slack_blocks : list
-        List of Slack Block objects for SlackHandler
+    slack_messages : list
+        List of Slack Message objects for SlackHandler
 
     TODO: Implement true Null-Object pattern.
     """
@@ -276,7 +117,7 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
         self.message = ""
         self._attachments = []  #: Strings or Paths
         self.subject = ""
-        self._slack_blocks = []  #: List of Block objects
+        self._slack_messages = []  #: List of Message objects
 
     @property
     def attachments(self):
@@ -296,17 +137,17 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
             self._attachments.append(value)
 
     @property
-    def slack_blocks(self):
-        """List of Slack Block objects
+    def slack_messages(self):
+        """List of Slack Message objects
 
         Returns:
-            List: Slack Block objects
+            List: Slack Message objects
         """
-        return self._slack_blocks
+        return self._slack_messages
 
-    @slack_blocks.setter
-    def slack_blocks(self, value):
+    @slack_messages.setter
+    def slack_messages(self, value):
         if isinstance(value, list):
-            self._slack_blocks.extend(value)
+            self._slack_messages.extend(value)
         else:
-            self._slack_blocks.append(value)
+            self._slack_messages.append(value)

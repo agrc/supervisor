@@ -122,7 +122,7 @@ Optionally relies on the `client_name` and `client_version` parameters to report
 
 `message_handlers.SlackHandler`
 
-A handler to send notifications to Slack via webhook URLs using Slack's Block Kit. Supports rich message formatting through Block objects and automatically splits messages to comply with Slack's limits.
+A handler to send notifications to Slack via webhook URLs using Slack's Block Kit. Supports rich message formatting through Message and Block objects and automatically splits messages to comply with Slack's limits.
 
 ### Instantiation
 
@@ -134,35 +134,42 @@ Optionally relies on the `client_name` and `client_version` parameters to report
 
 ### Using Slack Block Kit
 
-The SlackHandler is designed to work with Slack's Block Kit for rich message formatting. Client applications populate the `slack_blocks` property of `MessageDetails` with Block objects:
+The SlackHandler is designed to work with Slack's Block Kit for rich message formatting. Client applications create `Message` objects and populate them with Block objects, then add them to the `slack_messages` property of `MessageDetails`:
 
 ```python
 from supervisor.message_handlers import SlackHandler
-from supervisor.models import MessageDetails, SectionBlock, ContextBlock, DividerBlock
+from supervisor.models import MessageDetails
+from supervisor.slack import Message, SectionBlock, ContextBlock, DividerBlock
 
 # Set up Slack handler
 slack_settings = {'webhook_url': 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'}
 handler = SlackHandler(slack_settings, client_name='my_project', client_version='1.0.0')
 
 # Create message with blocks
-message = MessageDetails()
-message.subject = 'Job Complete'
-message.slack_blocks = [
-    SectionBlock(':white_check_mark: *Processing Complete*'),
-    ContextBlock(['Status: Success', 'Items processed: 100']),
-    DividerBlock(),
-    SectionBlock('All tasks completed successfully')
-]
+message = Message(text='Job Complete')
+message.add(SectionBlock(':white_check_mark: *Processing Complete*'))
+message.add(ContextBlock(['Status: Success', 'Items processed: 100']))
+message.add(DividerBlock())
+message.add(SectionBlock('All tasks completed successfully'))
+
+message_details = MessageDetails()
+message_details.slack_messages = message
 
 supervisor.add_message_handler(handler)
-supervisor.notify(message)
+supervisor.notify(message_details)
 ```
 
 ### Available Block Types
 
-The following Block Kit objects are available in `supervisor.models`:
+The following Block Kit objects are available in `supervisor.slack`:
 
-- **SectionBlock(text, fields=None)**: Flexible block for text and fields
+- **Message(text="", blocks=None)**: Container for Slack message with blocks
+  - `text`: Fallback text for notifications
+  - `blocks`: Optional initial blocks (single Block or list)
+  - `add(block)`: Add a block to the message
+  - `get_messages()`: Get message payloads (automatically splits if >50 blocks)
+
+- **SectionBlock(text=None, fields=None)**: Flexible block for text and fields
   - `text`: Main text content (max 3000 chars)
   - `fields`: Optional list of field texts (max 2000 chars each, 10 fields max)
 
@@ -171,11 +178,11 @@ The following Block Kit objects are available in `supervisor.models`:
 
 - **DividerBlock()**: Visual separator (like `<hr>`)
 
-- **Text.to_text(text, max_length)**: Helper to create markdown text with length limiting
+- **Text.to_text(text, max_length=None)**: Helper to create markdown text with length limiting
 
 ### Text Fallback
 
-If `slack_blocks` is empty, the handler automatically falls back to sending a simple text message using the `.message` and `.subject` properties:
+If `slack_messages` is empty, the handler automatically falls back to sending a simple text message using the `.message` and `.subject` properties:
 
 ```python
 message = MessageDetails()
@@ -186,9 +193,7 @@ supervisor.notify(message)
 
 ### Message Splitting
 
-The handler automatically splits messages when they exceed Slack's limits:
-
-**Block Count Limit**: Messages with more than 50 blocks (Slack's maximum) are automatically split into multiple messages, with each message containing up to 50 blocks.
+The `Message` class automatically handles splitting when messages exceed Slack's 50 block limit through the `get_messages()` method. The SlackHandler processes each split message separately.
 
 **Text Length Limit** (for fallback mode): When using text fallback, messages exceeding 3000 characters are split into multiple parts:
 - The first message includes the subject header
@@ -208,8 +213,7 @@ Text is automatically truncated to these limits when creating Block objects.
 
 #### For Block Kit Messages
 
-- `subject`: Message subject (used as fallback text for notifications)
-- `slack_blocks`: List of Block objects (SectionBlock, ContextBlock, DividerBlock)
+- `slack_messages`: List of Message objects (from supervisor.slack)
 
 #### For Text Fallback Messages
 
