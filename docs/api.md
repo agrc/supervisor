@@ -122,7 +122,7 @@ Optionally relies on the `client_name` and `client_version` parameters to report
 
 `message_handlers.SlackHandler`
 
-A handler to send notifications to Slack via webhook URLs. Supports custom message formatting through user-provided formatter functions and automatically splits long messages to comply with Slack's message length restrictions.
+A handler to send notifications to Slack via webhook URLs using Slack's Block Kit. Supports rich message formatting through Block objects and automatically splits messages to comply with Slack's limits.
 
 ### Instantiation
 
@@ -130,63 +130,88 @@ Relies on the `slack_settings` parameter to configure the Slack webhook. This di
 
 - `webhook_url`: The Slack incoming webhook URL for your channel (obtained from Slack's webhook configuration)
 
-Optionally supports a `formatter` parameter, which is a callable that accepts `(message_details, client_name, client_version)` and returns a dict formatted for Slack's webhook API. If not provided, a default formatter is used that creates a simple text message with markdown formatting.
+Optionally relies on the `client_name` and `client_version` parameters to report the client program's name and version number in text fallback messages.
 
-The `max_length` parameter (default: 3000) sets the maximum character length for a single Slack message. Messages exceeding this length will be automatically split into multiple messages with part numbering.
+### Using Slack Block Kit
 
-Optionally relies on the `client_name` and `client_version` parameters to report the client program's name and version number in the message.
+The SlackHandler is designed to work with Slack's Block Kit for rich message formatting. Client applications populate the `slack_blocks` property of `MessageDetails` with Block objects:
 
-### Custom Formatter
-
-The formatter function should accept three parameters:
-- `message_details` (MessageDetails): The message to format
-- `client_name` (str): Name of the client application
-- `client_version` (str): Version of the client application
-
-It should return a dict compatible with Slack's webhook API, typically containing at minimum a `text` field. You can also include `blocks` for more complex formatting using Slack's Block Kit.
-
-Example custom formatter:
 ```python
-def my_formatter(message_details, client_name, client_version):
-    return {
-        "text": f"{message_details.subject}: {message_details.message}",
-        "blocks": [
-            {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": message_details.subject
-                }
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": message_details.message
-                }
-            }
-        ]
-    }
+from supervisor.message_handlers import SlackHandler
+from supervisor.models import MessageDetails, SectionBlock, ContextBlock, DividerBlock
 
-slack_handler = SlackHandler(slack_settings, formatter=my_formatter)
+# Set up Slack handler
+slack_settings = {'webhook_url': 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'}
+handler = SlackHandler(slack_settings, client_name='my_project', client_version='1.0.0')
+
+# Create message with blocks
+message = MessageDetails()
+message.subject = 'Job Complete'
+message.slack_blocks = [
+    SectionBlock(':white_check_mark: *Processing Complete*'),
+    ContextBlock(['Status: Success', 'Items processed: 100']),
+    DividerBlock(),
+    SectionBlock('All tasks completed successfully')
+]
+
+supervisor.add_message_handler(handler)
+supervisor.notify(message)
+```
+
+### Available Block Types
+
+The following Block Kit objects are available in `supervisor.models`:
+
+- **SectionBlock(text, fields=None)**: Flexible block for text and fields
+  - `text`: Main text content (max 3000 chars)
+  - `fields`: Optional list of field texts (max 2000 chars each, 10 fields max)
+
+- **ContextBlock(elements)**: Display contextual information
+  - `elements`: List of text elements (max 10 elements, 2000 chars each)
+
+- **DividerBlock()**: Visual separator (like `<hr>`)
+
+- **Text.to_text(text, max_length)**: Helper to create markdown text with length limiting
+
+### Text Fallback
+
+If `slack_blocks` is empty, the handler automatically falls back to sending a simple text message using the `.message` and `.subject` properties:
+
+```python
+message = MessageDetails()
+message.subject = 'Simple Alert'
+message.message = 'This is a plain text message'
+supervisor.notify(message)
 ```
 
 ### Message Splitting
 
-The handler will automatically split messages when they exceed Slack's limits:
+The handler automatically splits messages when they exceed Slack's limits:
 
-**Text Length Limit**: When a formatted message's `text` field exceeds `max_length` (default: 3000 characters), the message is split into multiple parts:
+**Block Count Limit**: Messages with more than 50 blocks (Slack's maximum) are automatically split into multiple messages, with each message containing up to 50 blocks.
+
+**Text Length Limit** (for fallback mode): When using text fallback, messages exceeding 3000 characters are split into multiple parts:
 - The first message includes the subject header
 - Middle messages (if any) contain only the message content
 - The last message includes the client name and version footer
 
-**Block Count Limit**: When a formatted message contains more than 50 blocks (Slack's maximum), the handler automatically falls back to text-based splitting, discarding the blocks and using simple text messages instead.
+### Section and Field Limits
 
-This ensures long error messages, logs, or complex block-based messages can be successfully delivered to Slack without truncation or API errors.
+Block Kit has built-in limits that are automatically enforced:
+- Section text: 3000 characters max
+- Section fields: 2000 characters max per field, 10 fields max
+- Context elements: 2000 characters max per element, 10 elements max
+
+Text is automatically truncated to these limits when creating Block objects.
 
 ### Supported MessageDetail Attributes
 
-#### Required
+#### For Block Kit Messages
+
+- `subject`: Message subject (used as fallback text for notifications)
+- `slack_blocks`: List of Block objects (SectionBlock, ContextBlock, DividerBlock)
+
+#### For Text Fallback Messages
 
 - `message`: The message to send formatted as a single string
 - `subject`: Message subject (used in the formatted output)

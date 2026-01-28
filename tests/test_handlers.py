@@ -1080,8 +1080,36 @@ class TestSendGridHandlerAttachments:
 
 
 class TestSlackHandler:
-    def test_send_message_basic(self, mocker):
-        """Test basic message sending with default formatter"""
+    def test_send_message_with_blocks(self, mocker):
+        """Test sending message with Slack blocks"""
+        from supervisor.models import SectionBlock, ContextBlock
+        
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.subject = "Test Subject"
+        message_details.slack_blocks = [
+            SectionBlock("Hello from Slack!"),
+            ContextBlock(["Context info"])
+        ]
+
+        slack_handler = message_handlers.SlackHandler(slack_settings, client_name="TestApp", client_version="1.0.0")
+        slack_handler.send_message(message_details)
+
+        #: Verify requests.post was called with blocks
+        assert mock_post.call_count == 1
+        payload = mock_post.call_args[1]["json"]
+        assert "blocks" in payload
+        assert len(payload["blocks"]) == 2
+        assert payload["text"] == "Test Subject"
+
+    def test_send_message_text_fallback(self, mocker):
+        """Test basic message sending with text fallback when no blocks"""
         mock_post = mocker.patch("requests.post")
         mock_response = mocker.Mock()
         mock_response.raise_for_status = mocker.Mock()
@@ -1096,13 +1124,10 @@ class TestSlackHandler:
         slack_handler = message_handlers.SlackHandler(slack_settings, client_name="TestApp", client_version="1.0.0")
         slack_handler.send_message(message_details)
 
-        #: Verify requests.post was called
+        #: Verify requests.post was called with text
         assert mock_post.call_count == 1
-        call_args = mock_post.call_args
-        assert call_args[0][0] == "https://hooks.slack.com/services/TEST/WEBHOOK/URL"
-        assert "json" in call_args[1]
-        payload = call_args[1]["json"]
-        assert "*Test Subject*" in payload["text"]
+        payload = mock_post.call_args[1]["json"]
+        assert "Test Subject" in payload["text"]
         assert "Test message" in payload["text"]
         assert "TestApp version: 1.0.0" in payload["text"]
 
@@ -1140,107 +1165,6 @@ class TestSlackHandler:
         #: Verify requests.post was NOT called
         assert mock_post.call_count == 0
 
-    def test_send_message_custom_formatter(self, mocker):
-        """Test using a custom formatter function"""
-        mock_post = mocker.patch("requests.post")
-        mock_response = mocker.Mock()
-        mock_response.raise_for_status = mocker.Mock()
-        mock_post.return_value = mock_response
-
-        def custom_formatter(message_details, client_name, client_version):
-            return {
-                "text": f"CUSTOM: {message_details.subject} - {message_details.message}",
-                "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": "Custom block"}}],
-            }
-
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        message_details = MessageDetails()
-        message_details.message = "Test message"
-        message_details.subject = "Test Subject"
-
-        slack_handler = message_handlers.SlackHandler(slack_settings, formatter=custom_formatter)
-        slack_handler.send_message(message_details)
-
-        #: Verify custom formatter was used
-        assert mock_post.call_count == 1
-        payload = mock_post.call_args[1]["json"]
-        assert payload["text"] == "CUSTOM: Test Subject - Test message"
-        assert "blocks" in payload
-
-    def test_send_message_formatter_error(self, mocker):
-        """Test that formatter errors are caught and warned"""
-        mock_post = mocker.patch("requests.post")
-
-        def broken_formatter(message_details, client_name, client_version):
-            raise ValueError("Formatter is broken!")
-
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        message_details = MessageDetails()
-        message_details.message = "Test message"
-        message_details.subject = "Test Subject"
-
-        with pytest.warns(UserWarning, match="Error formatting message for Slack"):
-            slack_handler = message_handlers.SlackHandler(slack_settings, formatter=broken_formatter)
-            slack_handler.send_message(message_details)
-
-        #: Verify requests.post was NOT called due to formatter error
-        assert mock_post.call_count == 0
-
-    def test_send_message_short_message(self, mocker):
-        """Test that short messages are sent in a single request"""
-        mock_post = mocker.patch("requests.post")
-        mock_response = mocker.Mock()
-        mock_response.raise_for_status = mocker.Mock()
-        mock_post.return_value = mock_response
-
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        message_details = MessageDetails()
-        message_details.message = "Short message"
-        message_details.subject = "Short Subject"
-
-        slack_handler = message_handlers.SlackHandler(slack_settings, max_length=3000)
-        slack_handler.send_message(message_details)
-
-        #: Verify only one request was made
-        assert mock_post.call_count == 1
-
-    def test_send_message_long_message_splitting(self, mocker):
-        """Test that long messages are split into multiple requests"""
-        mock_post = mocker.patch("requests.post")
-        mock_response = mocker.Mock()
-        mock_response.raise_for_status = mocker.Mock()
-        mock_post.return_value = mock_response
-
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        #: Create a message that will exceed max_length
-        long_message = "A" * 5000
-        message_details = MessageDetails()
-        message_details.message = long_message
-        message_details.subject = "Long Subject"
-
-        slack_handler = message_handlers.SlackHandler(slack_settings, max_length=3000)
-        slack_handler.send_message(message_details)
-
-        #: Verify multiple requests were made
-        assert mock_post.call_count > 1
-
-        #: Verify first message has header, last has footer
-        first_call_payload = mock_post.call_args_list[0][1]["json"]
-        last_call_payload = mock_post.call_args_list[-1][1]["json"]
-        
-        assert "*Long Subject*" in first_call_payload["text"]
-        assert "version:" in last_call_payload["text"]
-        
-        #: Verify middle messages (if any) don't have header or footer
-        if mock_post.call_count > 2:
-            middle_call_payload = mock_post.call_args_list[1][1]["json"]
-            assert "*Long Subject*" not in middle_call_payload["text"]
-            assert "version:" not in middle_call_payload["text"]
-
     def test_send_message_post_error(self, mocker):
         """Test handling of HTTP errors when posting to Slack"""
         mock_post = mocker.patch("requests.post")
@@ -1256,25 +1180,8 @@ class TestSlackHandler:
             slack_handler = message_handlers.SlackHandler(slack_settings)
             slack_handler.send_message(message_details)
 
-    def test_default_formatter_structure(self, mocker):
-        """Test the default formatter creates proper structure"""
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        message_details = MessageDetails()
-        message_details.message = "Test\nmultiline\nmessage"
-        message_details.subject = "Test Subject"
-
-        slack_handler = message_handlers.SlackHandler(slack_settings, client_name="MyApp", client_version="2.0.0")
-
-        formatted = slack_handler._default_formatter(message_details, "MyApp", "2.0.0")
-
-        assert "text" in formatted
-        assert "*Test Subject*" in formatted["text"]
-        assert "Test\nmultiline\nmessage" in formatted["text"]
-        assert "MyApp version: 2.0.0" in formatted["text"]
-
-    def test_message_splitting_with_exact_boundary(self, mocker):
-        """Test message splitting when message length exactly matches max_length"""
+    def test_send_message_long_text_splitting(self, mocker):
+        """Test that long text messages are split into multiple requests"""
         mock_post = mocker.patch("requests.post")
         mock_response = mocker.Mock()
         mock_response.raise_for_status = mocker.Mock()
@@ -1282,54 +1189,90 @@ class TestSlackHandler:
 
         slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
 
-        #: Create message that will be exactly at the boundary
-        max_len = 500
+        #: Create a message that will exceed 3000 chars
+        long_message = "A" * 5000
         message_details = MessageDetails()
-        message_details.subject = "S"
-        message_details.message = "A" * (max_len - 100)  # Leave room for header/footer
+        message_details.message = long_message
+        message_details.subject = "Long Subject"
 
-        slack_handler = message_handlers.SlackHandler(slack_settings, max_length=max_len)
+        slack_handler = message_handlers.SlackHandler(slack_settings)
         slack_handler.send_message(message_details)
 
-        #: Should send without splitting since we're under the limit
-        assert mock_post.call_count >= 1
-
-    def test_custom_max_length(self, mocker):
-        """Test that custom max_length parameter is respected"""
-        mock_post = mocker.patch("requests.post")
-        mock_response = mocker.Mock()
-        mock_response.raise_for_status = mocker.Mock()
-        mock_post.return_value = mock_response
-
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        message_details = MessageDetails()
-        message_details.message = "A" * 200
-        message_details.subject = "Test"
-
-        #: Use a very small max_length to force splitting
-        slack_handler = message_handlers.SlackHandler(slack_settings, max_length=100)
-        slack_handler.send_message(message_details)
-
-        #: Should have split the message
+        #: Verify multiple requests were made
         assert mock_post.call_count > 1
 
-    def test_subject_version_too_long_for_splitting(self, mocker):
-        """Test warning when subject and version info exceed max_length"""
+        #: Verify first message has header, last has footer
+        first_call_payload = mock_post.call_args_list[0][1]["json"]
+        last_call_payload = mock_post.call_args_list[-1][1]["json"]
+        
+        assert "*Long Subject*" in first_call_payload["text"]
+        assert "version:" in last_call_payload["text"]
+
+    def test_send_message_many_blocks_splitting(self, mocker):
+        """Test that messages with over 50 blocks are split"""
+        from supervisor.models import SectionBlock
+        
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.subject = "Test"
+        #: Create 60 blocks (over the 50 limit)
+        message_details.slack_blocks = [SectionBlock(f"Block {i}") for i in range(60)]
+
+        slack_handler = message_handlers.SlackHandler(slack_settings)
+        slack_handler.send_message(message_details)
+
+        #: Should split the message into multiple posts
+        assert mock_post.call_count > 1
+        
+        #: Verify total blocks sent equals original
+        total_blocks = sum(len(call[1]["json"]["blocks"]) for call in mock_post.call_args_list)
+        assert total_blocks == 60
+
+    def test_send_message_few_blocks_no_split(self, mocker):
+        """Test that messages with blocks under 50 are sent as-is"""
+        from supervisor.models import SectionBlock
+        
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.raise_for_status = mocker.Mock()
+        mock_post.return_value = mock_response
+
+        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
+
+        message_details = MessageDetails()
+        message_details.subject = "Test"
+        #: Create 30 blocks (under the 50 limit)
+        message_details.slack_blocks = [SectionBlock(f"Block {i}") for i in range(30)]
+
+        slack_handler = message_handlers.SlackHandler(slack_settings)
+        slack_handler.send_message(message_details)
+
+        #: Should send as-is (not split) since under 50 blocks
+        assert mock_post.call_count == 1
+        payload = mock_post.call_args[1]["json"]
+        assert len(payload.get("blocks", [])) == 30
+
+    def test_subject_version_too_long_for_text_splitting(self, mocker):
+        """Test warning when subject and version info exceed max length for text messages"""
         mock_post = mocker.patch("requests.post")
 
         slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
 
         message_details = MessageDetails()
         message_details.message = "A" * 200
-        message_details.subject = "Very Long Subject " * 10  # Make subject very long
+        message_details.subject = "S" * 2000  # Make subject very long
 
-        #: Use small max_length with long subject and version to trigger warning
+        #: Use long client name and version to trigger warning
         slack_handler = message_handlers.SlackHandler(
             slack_settings, 
-            max_length=50,  # Very small max_length
-            client_name="VeryLongClientNameThatExceedsLimit",
-            client_version="1.0.0.0.0.0.0.0"
+            client_name="C" * 1000,
+            client_version="V" * 1000
         )
 
         with pytest.warns(UserWarning, match="Subject and version info too long for Slack message splitting"):
@@ -1338,58 +1281,53 @@ class TestSlackHandler:
         #: Verify no messages were sent due to the warning
         assert mock_post.call_count == 0
 
-    def test_message_with_blocks_under_limit(self, mocker):
-        """Test that messages with blocks under 50 are sent as-is"""
-        mock_post = mocker.patch("requests.post")
-        mock_response = mocker.Mock()
-        mock_response.raise_for_status = mocker.Mock()
-        mock_post.return_value = mock_response
-
-        def formatter_with_blocks(message_details, client_name, client_version):
-            #: Create 30 blocks (under the 50 limit)
-            blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": f"Block {i}"}} for i in range(30)]
-            return {"text": "Message with blocks", "blocks": blocks}
-
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        message_details = MessageDetails()
-        message_details.message = "Test message"
-        message_details.subject = "Test"
-
-        slack_handler = message_handlers.SlackHandler(slack_settings, formatter=formatter_with_blocks)
-        slack_handler.send_message(message_details)
-
-        #: Should send as-is (not split) since under 50 blocks
-        assert mock_post.call_count == 1
-        payload = mock_post.call_args[1]["json"]
-        assert len(payload.get("blocks", [])) == 30
-
-    def test_message_with_blocks_over_limit(self, mocker):
-        """Test that messages with over 50 blocks trigger splitting"""
-        mock_post = mocker.patch("requests.post")
-        mock_response = mocker.Mock()
-        mock_response.raise_for_status = mocker.Mock()
-        mock_post.return_value = mock_response
-
-        def formatter_with_many_blocks(message_details, client_name, client_version):
-            #: Create 60 blocks (over the 50 limit)
-            blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": f"Block {i}"}} for i in range(60)]
-            return {"text": "Message with many blocks", "blocks": blocks}
-
-        slack_settings = {"webhook_url": "https://hooks.slack.com/services/TEST/WEBHOOK/URL"}
-
-        message_details = MessageDetails()
-        message_details.message = "A" * 5000  # Long message to ensure splitting
-        message_details.subject = "Test"
-
-        slack_handler = message_handlers.SlackHandler(slack_settings, formatter=formatter_with_many_blocks, max_length=3000)
-        slack_handler.send_message(message_details)
-
-        #: Should split the message due to block count exceeding 50
-        #: Falls back to text-based splitting
-        assert mock_post.call_count > 1
+    def test_block_types(self):
+        """Test that Block Kit objects can be created and resolved"""
+        from supervisor.models import SectionBlock, ContextBlock, DividerBlock, Text
         
-        #: Verify that the sent messages don't have blocks (fallback to text)
-        for call in mock_post.call_args_list:
-            payload = call[1]["json"]
-            assert "blocks" not in payload or len(payload.get("blocks", [])) == 0
+        #: Test SectionBlock
+        section = SectionBlock("Test text")
+        resolved = section._resolve()
+        assert resolved["type"] == "section"
+        assert resolved["text"]["text"] == "Test text"
+        
+        #: Test SectionBlock with fields
+        section_fields = SectionBlock(fields=["Field 1", "Field 2"])
+        resolved_fields = section_fields._resolve()
+        assert len(resolved_fields["fields"]) == 2
+        
+        #: Test ContextBlock
+        context = ContextBlock(["Element 1", "Element 2"])
+        resolved_context = context._resolve()
+        assert resolved_context["type"] == "context"
+        assert len(resolved_context["elements"]) == 2
+        
+        #: Test DividerBlock
+        divider = DividerBlock()
+        resolved_divider = divider._resolve()
+        assert resolved_divider["type"] == "divider"
+        
+        #: Test Text
+        text = Text("Test")
+        resolved_text = text._resolve()
+        assert resolved_text["type"] == "mrkdwn"
+        assert resolved_text["text"] == "Test"
+
+    def test_message_details_slack_blocks_property(self):
+        """Test that MessageDetails has slack_blocks property"""
+        from supervisor.models import SectionBlock
+        
+        message_details = MessageDetails()
+        
+        #: Test initial state
+        assert message_details.slack_blocks == []
+        
+        #: Test adding single block
+        block1 = SectionBlock("Block 1")
+        message_details.slack_blocks = block1
+        assert len(message_details.slack_blocks) == 1
+        
+        #: Test adding list of blocks
+        blocks = [SectionBlock("Block 2"), SectionBlock("Block 3")]
+        message_details.slack_blocks = blocks
+        assert len(message_details.slack_blocks) == 3
