@@ -416,17 +416,12 @@ class SendGridHandler(MessageHandler):  # pylint: disable=too-few-public-methods
 
 
 class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
-    """Send a notification to Slack via webhook URL.
+    """Send a notification to Slack via webhook URL using Slack Block Kit.
 
     Attributes
     ----------
     slack_settings : dict
         'webhook_url' (str): Slack webhook URL for posting messages
-    formatter : callable, optional
-        Function that takes a MessageDetails object and returns a dict for Slack's API.
-        If not provided, uses a default formatter that creates a simple text message.
-    max_length : int
-        Maximum character length for a single Slack message (default: 3000)
     client_name : str
         pip-install name of the client project for version reporting
     client_version : str
@@ -439,11 +434,9 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     """
 
     def __init__(
-        self, slack_settings, formatter=None, max_length=3000, client_name="unknown client", client_version="not specified"
+        self, slack_settings, client_name="unknown client", client_version="not specified"
     ):
         self.slack_settings = slack_settings
-        self.formatter = formatter if formatter else self._default_formatter
-        self.max_length = max_length
         self.client_name = client_name
         self.client_version = client_version
 
@@ -453,7 +446,7 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
         Parameters
         ----------
         message_details : MessageDetails
-            Must have .message, .subject; .attachments are not currently supported
+            Must have .slack_blocks (list of Block objects) or .message and .subject for fallback
         """
 
         #: Verify webhook URL exists
@@ -467,71 +460,86 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             warnings.warn("Slack webhook_url exists but is empty. No message sent.")
             return
 
-        #: Format the message using the provided or default formatter
-        try:
-            formatted_payload = self.formatter(message_details, self.client_name, self.client_version)
-        except Exception as err:  # pylint: disable=broad-except
-            warnings.warn(f"Error formatting message for Slack: {err}. No message sent.")
-            return
-
-        #: Extract text content and blocks to check limits
-        message_text = formatted_payload.get("text", "")
-        message_blocks = formatted_payload.get("blocks", [])
-
-        #: Check if we need to split based on text length or block count
-        #: Slack limits: 3000 chars for text (webhook), 50 blocks max
-        needs_split = len(message_text) > self.max_length or len(message_blocks) > 50
-
-        #: If message fits within limits, send as-is
-        if not needs_split:
-            self._post_to_slack(webhook_url, formatted_payload)
+        #: Use slack_blocks if available, otherwise fall back to message text
+        if message_details.slack_blocks and len(message_details.slack_blocks) > 0:
+            self._send_block_messages(webhook_url, message_details)
         else:
-            #: Split message into chunks and send separately
-            self._send_split_messages(webhook_url, message_details)
+            #: Fall back to text-based message
+            self._send_text_messages(webhook_url, message_details)
 
-    def _default_formatter(self, message_details, client_name, client_version):
-        """Default formatter for Slack messages.
-
-        Parameters
-        ----------
-        message_details : MessageDetails
-            Must have .message and .subject
-        client_name : str
-            Name of the client project
-        client_version : str
-            Version of the client project
-
-        Returns
-        -------
-        dict
-            Slack message payload with text field
-        """
-        #: Combine subject and message
-        full_message = f"*{message_details.subject}*\n\n{message_details.message}"
-
-        #: Add version info
-        full_message += f"\n\n_{client_name} version: {client_version}_"
-
-        return {"text": full_message}
-
-    def _send_split_messages(self, webhook_url, message_details):
-        """Split a long message into chunks and send each separately.
+    def _send_block_messages(self, webhook_url, message_details):
+        """Send messages using Slack blocks with proper splitting.
 
         Parameters
         ----------
         webhook_url : str
             Slack webhook URL
         message_details : MessageDetails
-            Original message details (for subject and message)
+            Message details with slack_blocks populated
         """
-        #: Calculate header and footer sizes for overhead calculation
-        header = f"*{message_details.subject}*\n\n"
+        from .models import split_blocks, MAX_BLOCKS
+
+        blocks = message_details.slack_blocks
+
+        #: Split blocks if they exceed the 50 block limit
+        if len(blocks) > MAX_BLOCKS:
+            block_chunks = split_blocks(blocks, MAX_BLOCKS)
+        else:
+            block_chunks = [blocks]
+
+        #: Send each chunk
+        for blocks_chunk in block_chunks:
+            payload = {
+                "text": message_details.subject if message_details.subject else "Notification",
+                "blocks": [block._resolve() for block in blocks_chunk]
+            }
+            self._post_to_slack(webhook_url, payload)
+
+    def _send_text_messages(self, webhook_url, message_details):
+        """Send messages using plain text with proper splitting.
+
+        Parameters
+        ----------
+        webhook_url : str
+            Slack webhook URL
+        message_details : MessageDetails
+            Message details with message and subject
+        """
+        #: Default max length for text messages (webhook limit)
+        max_length = 3000
+
+        #: Build full message with header and footer
+        header = f"*{message_details.subject}*\n\n" if message_details.subject else ""
         footer = f"\n\n_{self.client_name} version: {self.client_version}_"
         
-        #: First message has header, last has footer, middle messages have neither
-        #: Calculate chunk size based on max overhead (header + footer for edge cases)
+        full_message = f"{header}{message_details.message}{footer}"
+
+        #: If message fits, send as-is
+        if len(full_message) <= max_length:
+            payload = {"text": full_message}
+            self._post_to_slack(webhook_url, payload)
+        else:
+            #: Split into chunks
+            self._send_split_text_messages(webhook_url, message_details, max_length)
+
+    def _send_split_text_messages(self, webhook_url, message_details, max_length):
+        """Split a long text message into chunks and send each separately.
+
+        Parameters
+        ----------
+        webhook_url : str
+            Slack webhook URL
+        message_details : MessageDetails
+            Original message details
+        max_length : int
+            Maximum length per message
+        """
+        header = f"*{message_details.subject}*\n\n" if message_details.subject else ""
+        footer = f"\n\n_{self.client_name} version: {self.client_version}_"
+        
+        #: Calculate chunk size based on overhead
         max_overhead = len(header) + len(footer)
-        chunk_size = self.max_length - max_overhead
+        chunk_size = max_length - max_overhead
 
         if chunk_size <= 0:
             warnings.warn("Subject and version info too long for Slack message splitting. No message sent.")
