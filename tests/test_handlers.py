@@ -9,7 +9,8 @@ import pytest
 import python_http_client
 
 from supervisor import message_handlers, models
-from supervisor.models import MessageDetails
+from supervisor.models import MessageDetails, Supervisor
+from supervisor.slack import Message, SectionBlock, ContextBlock, Text
 
 
 def test_console_handler_prints(mocker, capsys):
@@ -1337,3 +1338,212 @@ class TestSlackHandler:
         messages = [msg2, msg3]
         message_details.slack_messages = messages
         assert len(message_details.slack_messages) == 3
+
+
+class TestSlackCoverage:
+    """Additional tests to improve slack.py coverage"""
+    
+    def test_block_repr(self):
+        """Test Block.__repr__ method"""
+        section = SectionBlock("Test")
+        repr_str = repr(section)
+        assert "section" in repr_str
+        assert "Test" in repr_str
+    
+    def test_text_truncation(self):
+        """Test Text.to_text with max_length truncation"""
+        long_text = "A" * 5000
+        truncated = Text.to_text(long_text, max_length=100)
+        assert len(truncated.text) == 100
+        assert truncated.text == "A" * 100
+    
+    def test_text_str(self):
+        """Test Text.__str__ method"""
+        text = Text("Hello")
+        str_repr = str(text)
+        assert "Hello" in str_repr
+        assert "mrkdwn" in str_repr
+    
+    def test_context_block_too_many_elements(self):
+        """Test ContextBlock raises ValueError with >10 elements"""
+        elements = [f"Element {i}" for i in range(15)]
+        with pytest.raises(ValueError, match="maximum of ten elements"):
+            ContextBlock(elements)
+    
+    def test_message_init_with_single_block(self):
+        """Test Message initialization with a single Block"""
+        block = SectionBlock("Test")
+        msg = Message(text="Subject", blocks=block)
+        assert len(msg.blocks) == 1
+        assert msg.blocks[0] == block
+    
+    def test_message_init_with_none_blocks(self):
+        """Test Message initialization with blocks=None"""
+        msg = Message(text="Test")
+        assert msg.blocks is None
+    
+    def test_message_resolve_with_custom_blocks(self):
+        """Test Message._resolve with custom blocks parameter"""
+        msg = Message(text="Test")
+        msg.add(SectionBlock("Block 1"))
+        msg.add(SectionBlock("Block 2"))
+        
+        custom_blocks = [SectionBlock("Custom")]
+        resolved = msg._resolve(blocks=custom_blocks)
+        
+        assert len(resolved["blocks"]) == 1
+        assert "Custom" in str(resolved)
+    
+    def test_message_no_blocks_fallback(self):
+        """Test Message._resolve when blocks is None but text exists"""
+        msg = Message(text="No blocks")
+        resolved = msg._resolve()
+        assert "text" in resolved
+        assert resolved["text"] == "No blocks"
+        assert "blocks" not in resolved
+    
+    def test_message_empty_text(self):
+        """Test Message with empty text string"""
+        msg = Message(text="", blocks=[SectionBlock("Test")])
+        resolved = msg._resolve()
+        assert "text" in resolved
+        assert resolved["text"] == ""
+    
+    def test_message_json(self):
+        """Test Message.json() method"""
+        msg = Message(text="Test")
+        msg.add(SectionBlock("Section"))
+        json_str = msg.json()
+        assert "Test" in json_str
+        assert "Section" in json_str
+    
+    def test_message_get_messages_no_blocks(self):
+        """Test Message.get_messages() when blocks is None"""
+        msg = Message(text="Simple text")
+        messages = msg.get_messages()
+        assert len(messages) == 1
+        assert "Simple text" in messages[0]
+    
+    def test_message_repr(self):
+        """Test Message.__repr__ method"""
+        msg = Message(text="Test message")
+        repr_str = repr(msg)
+        assert "Test message" in repr_str
+    
+    def test_message_getitem(self):
+        """Test Message.__getitem__ method"""
+        msg = Message(text="Test")
+        msg.add(SectionBlock("Block"))
+        assert msg["text"] == "Test"
+        assert "blocks" in msg._resolve()
+    
+    def test_message_keys(self):
+        """Test Message.keys() method"""
+        msg = Message(text="Test")
+        msg.add(SectionBlock("Block"))
+        keys = msg.keys()
+        assert "text" in keys
+        assert "blocks" in keys
+
+
+class TestModelsCoverage:
+    """Additional tests to improve models.py coverage"""
+    
+    def test_supervisor_with_handle_errors_false(self):
+        """Test Supervisor with handle_errors=False"""
+        import sys
+        original_excepthook = sys.excepthook
+        
+        supervisor = Supervisor(handle_errors=False)
+        
+        # Verify excepthook was NOT changed
+        assert sys.excepthook == original_excepthook
+        assert supervisor.message_handlers == []
+    
+    def test_supervisor_notify(self):
+        """Test Supervisor.notify method"""
+        supervisor = Supervisor(handle_errors=False)
+        
+        # Create a mock handler
+        mock_handler = mock.Mock()
+        supervisor.add_message_handler(mock_handler)
+        
+        # Notify
+        msg = MessageDetails()
+        msg.message = "Test"
+        supervisor.notify(msg)
+        
+        # Verify handler was called
+        mock_handler.send_message.assert_called_once_with(msg)
+    
+    def test_supervisor_global_exception_handler(self, mocker):
+        """Test the global exception handler"""
+        # Create supervisor with a mock logger
+        mock_logger = mocker.Mock()
+        supervisor = Supervisor(handle_errors=False, logger=mock_logger, log_path="/tmp/test.log")
+        
+        # Get the exception handler
+        exception_handler = supervisor._manage_exceptions()
+        
+        # Create a mock handler to receive notifications
+        mock_handler = mocker.Mock()
+        supervisor.add_message_handler(mock_handler)
+        
+        # Trigger an exception
+        try:
+            raise ValueError("Test error")
+        except ValueError:
+            import sys
+            exc_info = sys.exc_info()
+            exception_handler(*exc_info)
+        
+        # Verify logger was called
+        assert mock_logger.error.call_count == 2
+        
+        # Verify notification was sent
+        mock_handler.send_message.assert_called_once()
+        call_args = mock_handler.send_message.call_args[0][0]
+        assert call_args.subject == "ERROR"
+        assert "Test error" in call_args.message
+        assert call_args.attachments == ["/tmp/test.log"]
+
+
+class TestMessageHandlersCoverage:
+    """Additional tests to improve message_handlers.py coverage"""
+    
+    def test_email_handler_send_message(self, mocker):
+        """Test EmailHandler.send_message to cover SMTP lines"""
+        # Create a mock SMTP instance
+        mock_smtp_instance = mocker.MagicMock()
+        mock_smtp_class = mocker.MagicMock(return_value=mock_smtp_instance)
+        
+        # Patch SMTP class
+        mocker.patch("supervisor.message_handlers.SMTP", mock_smtp_class)
+        
+        email_settings = {
+            "from_address": "test@example.com",
+            "to_addresses": "recipient@example.com",
+            "smtpServer": "smtp.example.com",
+            "smtpPort": 25
+        }
+        
+        handler = message_handlers.EmailHandler(email_settings, "TestApp", "1.0")
+        
+        msg_details = MessageDetails()
+        msg_details.message = "Test message"
+        msg_details.subject = "Test subject"
+        
+        handler.send_message(msg_details)
+        
+        # Verify SMTP was instantiated and used as context manager
+        mock_smtp_class.assert_called_once_with("smtp.example.com", 25)
+        mock_smtp_instance.__enter__.assert_called_once()
+        mock_smtp_instance.__exit__.assert_called_once()
+        
+        # Verify sendmail was called
+        assert mock_smtp_instance.__enter__().sendmail.called
+
+
+# Run the tests
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
