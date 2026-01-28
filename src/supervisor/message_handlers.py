@@ -4,6 +4,7 @@ message_handlers.py: Holds all the different message handlers
 
 import gzip
 import io
+import json
 import warnings
 from abc import ABC, abstractmethod
 from base64 import b64encode
@@ -14,6 +15,7 @@ from pathlib import Path
 from shutil import make_archive
 from smtplib import SMTP
 from tempfile import TemporaryDirectory
+from typing import Dict
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import python_http_client
@@ -434,13 +436,13 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
     """
 
     def __init__(
-        self, slack_settings, client_name="unknown client", client_version="not specified"
-    ):
+        self, slack_settings: Dict[str, str], client_name: str = "unknown client", client_version: str = "not specified"
+    ) -> None:
         self.slack_settings = slack_settings
         self.client_name = client_name
         self.client_version = client_version
 
-    def send_message(self, message_details):
+    def send_message(self, message_details) -> None:
         """Format and send message to Slack, splitting if necessary.
 
         Parameters
@@ -467,7 +469,7 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             #: Fall back to text-based message
             self._send_text_messages(webhook_url, message_details)
 
-    def _send_slack_messages(self, webhook_url, message_details):
+    def _send_slack_messages(self, webhook_url: str, message_details) -> None:
         """Send messages using Slack Message objects with proper splitting.
 
         Parameters
@@ -484,11 +486,10 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             
             #: Send each payload
             for payload_str in message_payloads:
-                import json
                 payload = json.loads(payload_str)
                 self._post_to_slack(webhook_url, payload)
 
-    def _send_text_messages(self, webhook_url, message_details):
+    def _send_text_messages(self, webhook_url: str, message_details) -> None:
         """Send messages using plain text with proper splitting.
 
         Parameters
@@ -515,7 +516,7 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             #: Split into chunks
             self._send_split_text_messages(webhook_url, message_details, max_length)
 
-    def _send_split_text_messages(self, webhook_url, message_details, max_length):
+    def _send_split_text_messages(self, webhook_url: str, message_details, max_length: int) -> None:
         """Split a long text message into chunks and send each separately.
 
         Parameters
@@ -557,7 +558,7 @@ class SlackHandler(MessageHandler):  # pylint: disable=too-few-public-methods
             self._post_to_slack(webhook_url, payload)
 
     @staticmethod
-    def _post_to_slack(webhook_url, payload):
+    def _post_to_slack(webhook_url: str, payload: Dict) -> None:
         """Post a message payload to Slack webhook.
 
         Parameters

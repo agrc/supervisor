@@ -5,8 +5,12 @@ This module holds the classes used by supervisor
 import os
 import sys
 import traceback
+from typing import TYPE_CHECKING, List, Union
 
 from .message_handlers import MessageHandler
+
+if TYPE_CHECKING:
+    from .slack import Message
 
 
 class Supervisor:
@@ -113,14 +117,14 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
     TODO: Implement true Null-Object pattern.
     """
 
-    def __init__(self):
-        self.message = ""
-        self._attachments = []  #: Strings or Paths
-        self.subject = ""
-        self._slack_messages = []  #: List of Message objects
+    def __init__(self) -> None:
+        self.message: str = ""
+        self._attachments: list = []  #: Strings or Paths
+        self.subject: str = ""
+        self._slack_messages: List["Message"] = []  #: List of Message objects
 
     @property
-    def attachments(self):
+    def attachments(self) -> list:
         """List of paths of files to attach
 
         Returns:
@@ -129,7 +133,7 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
         return self._attachments
 
     @attachments.setter
-    def attachments(self, value):
+    def attachments(self, value) -> None:
         if isinstance(value, list):
             self._attachments.extend(value)
 
@@ -137,16 +141,16 @@ class MessageDetails:  # pylint: disable=too-few-public-methods
             self._attachments.append(value)
 
     @property
-    def slack_messages(self):
+    def slack_messages(self) -> List["Message"]:
         """List of Slack Message objects
 
         Returns:
-            List: Slack Message objects
+            List[Message]: Slack Message objects
         """
         return self._slack_messages
 
     @slack_messages.setter
-    def slack_messages(self, value):
+    def slack_messages(self, value: Union["Message", List["Message"]]) -> None:
         if isinstance(value, list):
             self._slack_messages.extend(value)
         else:
