@@ -1353,9 +1353,47 @@ class TestSlackCoverage:
     def test_text_truncation(self):
         """Test Text.to_text with max_length truncation"""
         long_text = "A" * 5000
-        truncated = Text.to_text(long_text, max_length=100)
+        
+        with pytest.warns(UserWarning, match="Text truncated"):
+            truncated = Text.to_text(long_text, max_length=100)
+        
+        # Check that text is truncated to max_length with indicator
         assert len(truncated.text) == 100
-        assert truncated.text == "A" * 100
+        assert truncated.text.endswith("... (text truncated due to length)")
+        # Check that the beginning of the text is preserved
+        truncation_indicator = "... (text truncated due to length)"
+        expected_prefix_length = 100 - len(truncation_indicator)
+        assert truncated.text.startswith("A" * expected_prefix_length)
+    
+    def test_text_empty_string_handling(self):
+        """Test that empty strings are replaced with a space"""
+        from supervisor.slack import Text
+        
+        text = Text.to_text("", max_length=None)
+        assert text.text == " "
+    
+    def test_text_truncation_with_small_max_length(self):
+        """Test truncation when max_length is too small for the indicator"""
+        from supervisor.slack import Text
+        
+        long_text = "A" * 100
+        
+        # When max_length is very small (e.g., 10), the indicator won't fit
+        with pytest.warns(UserWarning, match="Text truncated"):
+            truncated = Text.to_text(long_text, max_length=10)
+        
+        assert len(truncated.text) == 10
+    
+    def test_section_block_empty_text(self):
+        """Test SectionBlock with empty text doesn't cause API errors"""
+        from supervisor.slack import SectionBlock
+        
+        # Empty string should be replaced with a space
+        section = SectionBlock(text="")
+        resolved = section._resolve()
+        
+        assert "text" in resolved
+        assert resolved["text"]["text"] == " "
     
     def test_text_str(self):
         """Test Text.__str__ method"""

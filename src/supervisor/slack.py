@@ -3,6 +3,7 @@ slack.py
 A module that holds the constructs for using the Slack API with Block Kit
 """
 
+import warnings
 from abc import ABC, abstractmethod
 from enum import Enum
 from json import dumps
@@ -100,8 +101,22 @@ class Text:
         Text
             Text object
         """
+        # Replace empty strings with a single space to avoid Slack API errors
+        if text == "":
+            text = " "
+        
         if max_length and len(text) > max_length:
-            text = text[:max_length]
+            # Account for the truncation indicator in the max length
+            truncation_indicator = "... (text truncated due to length)"
+            adjusted_max_length = max_length - len(truncation_indicator)
+            
+            if adjusted_max_length > 0:
+                text = text[:adjusted_max_length] + truncation_indicator
+                warnings.warn(f"Text truncated from {len(text) + len(truncation_indicator)} to {max_length} characters")
+            else:
+                # If max_length is too small to accommodate the indicator, just truncate
+                text = text[:max_length]
+                warnings.warn(f"Text truncated to {max_length} characters")
 
         return Text(text=text)
 
