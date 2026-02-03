@@ -72,7 +72,9 @@ class Block(ABC):
 
 
 class Text:
-    """A text class formatted using Slack's markdown syntax"""
+    """A text class formatted using Slack's markdown syntax
+    Ref: https://docs.slack.dev/reference/block-kit/blocks/markdown-block/
+    """
 
     def __init__(self, text: str) -> None:
         self.text = text
@@ -125,7 +127,9 @@ class Text:
 
 
 class SectionBlock(Block):
-    """A section is one of the most flexible blocks available"""
+    """A section is one of the most flexible blocks available
+    Ref: https://docs.slack.dev/reference/block-kit/blocks/section-block
+    """
 
     def __init__(self, text: Optional[str] = None, fields: Optional[List[str]] = None) -> None:
         super().__init__(block=BlockType.SECTION)
@@ -150,7 +154,9 @@ class SectionBlock(Block):
 
 
 class ContextBlock(Block):
-    """Displays message context. Typically used after a section"""
+    """Displays message context. Typically used after a section
+    Ref: https://docs.slack.dev/reference/block-kit/blocks/context-block
+    """
 
     def __init__(self, elements: List[str]) -> None:
         super().__init__(block=BlockType.CONTEXT)
@@ -171,7 +177,9 @@ class ContextBlock(Block):
 
 
 class DividerBlock(Block):
-    """A content divider like an <hr>"""
+    """A content divider like an <hr>
+    Ref: https://docs.slack.dev/reference/block-kit/blocks/divider-block
+    """
 
     def __init__(self) -> None:
         super().__init__(block=BlockType.DIVIDER)
