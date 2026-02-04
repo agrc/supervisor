@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.3.0](https://github.com/agrc/supervisor/compare/v3.2.1...v3.3.0) (2026-02-04)
+
+
+### Features
+
+* implement SlackHandler with message splitting and custom formatters ([d05239d](https://github.com/agrc/supervisor/commit/d05239d7f6466b5070659dd9f8e45a62c425b378))
+* add block count limit checking for Slack messages (max 50 blocks) ([fa1fac7](https://github.com/agrc/supervisor/commit/fa1fac726ec9a18686d8f0e1197a8dcc009ec0ca))
+
+
+
+### Bug Fixes
+
+* add text truncation warning and handle empty strings in Slack messages ([319b5be](https://github.com/agrc/supervisor/commit/319b5bead8368b5a0161c719d4037d847e347071))
+
+
+### Documentation
+
+* add conventional commits format section ([1c6ba09](https://github.com/agrc/supervisor/commit/1c6ba099e9b967ad3a3a6cb24de6da8e5a509c32))
+* update SlackHandler documentation with usage examples ([1095fc6](https://github.com/agrc/supervisor/commit/1095fc63ebe04251880d1597dcb7864bbee2d4a7))
+
 ## [3.2.1](https://github.com/agrc/supervisor/compare/v3.2.0...v3.2.1) (2025-11-14)
 
 
