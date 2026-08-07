@@ -20,24 +20,7 @@ jobs:
         with:
           show-progress: false
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v6.2.0
+      - name: 🧪 Tests
+        uses: ./.github/actions/test-and-coverage
         with:
-          python-version-file: .python-version
-          cache: pip
-          cache-dependency-path: setup.py
-
-      - name: 🏗 Install module
-        run: pip install .[tests]
-
-      - name: 🧶 Lint
-        run: ruff check --output-format=github .
-
-      - name: 🧪 Run tests
-        run: pytest
-
-      - name: ⬆️ Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./cov.xml
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
