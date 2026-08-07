@@ -10,7 +10,7 @@ import python_http_client
 
 from supervisor import message_handlers, models
 from supervisor.models import MessageDetails, Supervisor
-from supervisor.slack import Message, SectionBlock, ContextBlock, Text
+from supervisor.slack import ContextBlock, Message, SectionBlock, Text
 
 
 def test_console_handler_prints(mocker, capsys):
@@ -138,11 +138,6 @@ def test_build_message_with_multiple_to_addresses(mocker):
 
 
 def test_gzip_not_called_for_non_existent_attachments(mocker, tmp_path):
-    distribution_Mock = mocker.Mock()
-    distribution_Mock.version = 0
-    distributions = [distribution_Mock]
-    mocker.patch("pkg_resources.require", return_value=distributions)
-
     message_details = MessageDetails()
     message_details.message = "test_message"
     message_details.subject = "test_subject"
@@ -163,11 +158,6 @@ def test_gzip_not_called_for_non_existent_attachments(mocker, tmp_path):
 
 
 def test_gzip_not_called_for_empty_str_attachment_path(mocker):
-    distribution_Mock = mocker.Mock()
-    distribution_Mock.version = 0
-    distributions = [distribution_Mock]
-    mocker.patch("pkg_resources.require", return_value=distributions)
-
     message_details = MessageDetails()
     message_details.message = "test_message"
     message_details.subject = "test_subject"
@@ -186,11 +176,6 @@ def test_gzip_not_called_for_empty_str_attachment_path(mocker):
 
 
 def test_gzip_called_3_times_for_3_attachments(mocker, tmp_path):
-    distribution_Mock = mocker.Mock()
-    distribution_Mock.version = 0
-    distributions = [distribution_Mock]
-    mocker.patch("pkg_resources.require", return_value=distributions)
-
     attributes = []
     for i in range(1, 4):
         path = tmp_path / f"att{i}"
@@ -551,11 +536,6 @@ class TestSendGridHandlerWhole:
             recipient_mock.assert_not_called()
 
     def test_send_message_full_integration_catches_400_bad_request(self, mocker):
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch("pkg_resources.require", return_value=distributions)
-
         sendgrid_settings = {
             "from_address": "foo@example.com",
             "to_addresses": "cheddar@example.com",
@@ -577,11 +557,6 @@ class TestSendGridHandlerWhole:
             sendgrid_handler.send_message(message_details)
 
     def test_send_message_full_integration_raises_400_other(self, mocker):
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch("pkg_resources.require", return_value=distributions)
-
         sendgrid_settings = {
             "from_address": "foo@example.com",
             "to_addresses": "cheddar@example.com",
@@ -601,11 +576,6 @@ class TestSendGridHandlerWhole:
             sendgrid_handler.send_message(message_details)
 
     def test_send_message_full_integration_catches_401_unauthorized(self, mocker):
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch("pkg_resources.require", return_value=distributions)
-
         sendgrid_settings = {
             "from_address": "foo@example.com",
             "to_addresses": "cheddar@example.com",
@@ -625,11 +595,6 @@ class TestSendGridHandlerWhole:
             sendgrid_handler.send_message(message_details)
 
     def test_send_message_full_integration_raises_401_other(self, mocker):
-        distribution_Mock = mocker.Mock()
-        distribution_Mock.version = 3.14
-        distributions = [distribution_Mock]
-        mocker.patch("pkg_resources.require", return_value=distributions)
-
         sendgrid_settings = {
             "from_address": "foo@example.com",
             "to_addresses": "cheddar@example.com",
@@ -1083,8 +1048,8 @@ class TestSendGridHandlerAttachments:
 class TestSlackHandler:
     def test_send_message_with_message_object(self, mocker):
         """Test sending message with Slack Message object"""
-        from supervisor.slack import Message, SectionBlock, ContextBlock
-        
+        from supervisor.slack import ContextBlock, Message, SectionBlock
+
         mock_post = mocker.patch("requests.post")
         mock_response = mocker.Mock()
         mock_response.raise_for_status = mocker.Mock()
@@ -1204,14 +1169,14 @@ class TestSlackHandler:
         #: Verify first message has header, last has footer
         first_call_payload = mock_post.call_args_list[0][1]["json"]
         last_call_payload = mock_post.call_args_list[-1][1]["json"]
-        
+
         assert "*Long Subject*" in first_call_payload["text"]
         assert "version:" in last_call_payload["text"]
 
     def test_send_message_many_blocks_splitting(self, mocker):
         """Test that messages with over 50 blocks are split"""
         from supervisor.slack import Message, SectionBlock
-        
+
         mock_post = mocker.patch("requests.post")
         mock_response = mocker.Mock()
         mock_response.raise_for_status = mocker.Mock()
@@ -1231,7 +1196,7 @@ class TestSlackHandler:
 
         #: Should split the message into multiple posts
         assert mock_post.call_count > 1
-        
+
         #: Verify total blocks sent equals original
         total_blocks = sum(len(call[1]["json"]["blocks"]) for call in mock_post.call_args_list)
         assert total_blocks == 60
@@ -1239,7 +1204,7 @@ class TestSlackHandler:
     def test_send_message_few_blocks_no_split(self, mocker):
         """Test that messages with blocks under 50 are sent as-is"""
         from supervisor.slack import Message, SectionBlock
-        
+
         mock_post = mocker.patch("requests.post")
         mock_response = mocker.Mock()
         mock_response.raise_for_status = mocker.Mock()
@@ -1273,11 +1238,7 @@ class TestSlackHandler:
         message_details.subject = "S" * 2000  # Make subject very long
 
         #: Use long client name and version to trigger warning
-        slack_handler = message_handlers.SlackHandler(
-            slack_settings, 
-            client_name="C" * 1000,
-            client_version="V" * 1000
-        )
+        slack_handler = message_handlers.SlackHandler(slack_settings, client_name="C" * 1000, client_version="V" * 1000)
 
         with pytest.warns(UserWarning, match="Subject and version info too long for Slack message splitting"):
             slack_handler.send_message(message_details)
@@ -1287,30 +1248,30 @@ class TestSlackHandler:
 
     def test_block_types(self):
         """Test that Block Kit objects can be created and resolved"""
-        from supervisor.slack import SectionBlock, ContextBlock, DividerBlock, Text
-        
+        from supervisor.slack import ContextBlock, DividerBlock, SectionBlock, Text
+
         #: Test SectionBlock
         section = SectionBlock("Test text")
         resolved = section._resolve()
         assert resolved["type"] == "section"
         assert resolved["text"]["text"] == "Test text"
-        
+
         #: Test SectionBlock with fields
         section_fields = SectionBlock(fields=["Field 1", "Field 2"])
         resolved_fields = section_fields._resolve()
         assert len(resolved_fields["fields"]) == 2
-        
+
         #: Test ContextBlock
         context = ContextBlock(["Element 1", "Element 2"])
         resolved_context = context._resolve()
         assert resolved_context["type"] == "context"
         assert len(resolved_context["elements"]) == 2
-        
+
         #: Test DividerBlock
         divider = DividerBlock()
         resolved_divider = divider._resolve()
         assert resolved_divider["type"] == "divider"
-        
+
         #: Test Text
         text = Text("Test")
         resolved_text = text._resolve()
@@ -1320,18 +1281,18 @@ class TestSlackHandler:
     def test_message_details_slack_messages_property(self):
         """Test that MessageDetails has slack_messages property"""
         from supervisor.slack import Message, SectionBlock
-        
+
         message_details = MessageDetails()
-        
+
         #: Test initial state
         assert message_details.slack_messages == []
-        
+
         #: Test adding single message
         msg1 = Message(text="Message 1")
         msg1.add(SectionBlock("Block 1"))
         message_details.slack_messages = msg1
         assert len(message_details.slack_messages) == 1
-        
+
         #: Test adding list of messages
         msg2 = Message(text="Message 2")
         msg3 = Message(text="Message 3")
@@ -1342,21 +1303,21 @@ class TestSlackHandler:
 
 class TestSlackCoverage:
     """Additional tests to improve slack.py coverage"""
-    
+
     def test_block_repr(self):
         """Test Block.__repr__ method"""
         section = SectionBlock("Test")
         repr_str = repr(section)
         assert "section" in repr_str
         assert "Test" in repr_str
-    
+
     def test_text_truncation(self):
         """Test Text.to_text with max_length truncation"""
         long_text = "A" * 5000
-        
+
         with pytest.warns(UserWarning, match="Text truncated"):
             truncated = Text.to_text(long_text, max_length=100)
-        
+
         # Check that text is truncated to max_length with indicator
         assert len(truncated.text) == 100
         assert truncated.text.endswith("... (text truncated due to length)")
@@ -1364,74 +1325,74 @@ class TestSlackCoverage:
         truncation_indicator = "... (text truncated due to length)"
         expected_prefix_length = 100 - len(truncation_indicator)
         assert truncated.text.startswith("A" * expected_prefix_length)
-    
+
     def test_text_empty_string_handling(self):
         """Test that empty strings are replaced with a space"""
         from supervisor.slack import Text
-        
+
         text = Text.to_text("", max_length=None)
         assert text.text == " "
-    
+
     def test_text_truncation_with_small_max_length(self):
         """Test truncation when max_length is too small for the indicator"""
         from supervisor.slack import Text
-        
+
         long_text = "A" * 100
-        
+
         # When max_length is very small (e.g., 10), the indicator won't fit
         with pytest.warns(UserWarning, match="Text truncated"):
             truncated = Text.to_text(long_text, max_length=10)
-        
+
         assert len(truncated.text) == 10
-    
+
     def test_section_block_empty_text(self):
         """Test SectionBlock with empty text doesn't cause API errors"""
         from supervisor.slack import SectionBlock
-        
+
         # Empty string should be replaced with a space
         section = SectionBlock(text="")
         resolved = section._resolve()
-        
+
         assert "text" in resolved
         assert resolved["text"]["text"] == " "
-    
+
     def test_text_str(self):
         """Test Text.__str__ method"""
         text = Text("Hello")
         str_repr = str(text)
         assert "Hello" in str_repr
         assert "mrkdwn" in str_repr
-    
+
     def test_context_block_too_many_elements(self):
         """Test ContextBlock raises ValueError with >10 elements"""
         elements = [f"Element {i}" for i in range(15)]
         with pytest.raises(ValueError, match="maximum of ten elements"):
             ContextBlock(elements)
-    
+
     def test_message_init_with_single_block(self):
         """Test Message initialization with a single Block"""
         block = SectionBlock("Test")
         msg = Message(text="Subject", blocks=block)
         assert len(msg.blocks) == 1
         assert msg.blocks[0] == block
-    
+
     def test_message_init_with_none_blocks(self):
         """Test Message initialization with blocks=None"""
         msg = Message(text="Test")
         assert msg.blocks is None
-    
+
     def test_message_resolve_with_custom_blocks(self):
         """Test Message._resolve with custom blocks parameter"""
         msg = Message(text="Test")
         msg.add(SectionBlock("Block 1"))
         msg.add(SectionBlock("Block 2"))
-        
+
         custom_blocks = [SectionBlock("Custom")]
         resolved = msg._resolve(blocks=custom_blocks)
-        
+
         assert len(resolved["blocks"]) == 1
         assert "Custom" in str(resolved)
-    
+
     def test_message_no_blocks_fallback(self):
         """Test Message._resolve when blocks is None but text exists"""
         msg = Message(text="No blocks")
@@ -1439,14 +1400,14 @@ class TestSlackCoverage:
         assert "text" in resolved
         assert resolved["text"] == "No blocks"
         assert "blocks" not in resolved
-    
+
     def test_message_empty_text(self):
         """Test Message with empty text string"""
         msg = Message(text="", blocks=[SectionBlock("Test")])
         resolved = msg._resolve()
         assert "text" in resolved
         assert resolved["text"] == ""
-    
+
     def test_message_json(self):
         """Test Message.json() method"""
         msg = Message(text="Test")
@@ -1454,27 +1415,27 @@ class TestSlackCoverage:
         json_str = msg.json()
         assert "Test" in json_str
         assert "Section" in json_str
-    
+
     def test_message_get_messages_no_blocks(self):
         """Test Message.get_messages() when blocks is None"""
         msg = Message(text="Simple text")
         messages = msg.get_messages()
         assert len(messages) == 1
         assert "Simple text" in messages[0]
-    
+
     def test_message_repr(self):
         """Test Message.__repr__ method"""
         msg = Message(text="Test message")
         repr_str = repr(msg)
         assert "Test message" in repr_str
-    
+
     def test_message_getitem(self):
         """Test Message.__getitem__ method"""
         msg = Message(text="Test")
         msg.add(SectionBlock("Block"))
         assert msg["text"] == "Test"
         assert "blocks" in msg._resolve()
-    
+
     def test_message_keys(self):
         """Test Message.keys() method"""
         msg = Message(text="Test")
@@ -1486,58 +1447,60 @@ class TestSlackCoverage:
 
 class TestModelsCoverage:
     """Additional tests to improve models.py coverage"""
-    
+
     def test_supervisor_with_handle_errors_false(self):
         """Test Supervisor with handle_errors=False"""
         import sys
+
         original_excepthook = sys.excepthook
-        
+
         supervisor = Supervisor(handle_errors=False)
-        
+
         # Verify excepthook was NOT changed
         assert sys.excepthook == original_excepthook
         assert supervisor.message_handlers == []
-    
+
     def test_supervisor_notify(self):
         """Test Supervisor.notify method"""
         supervisor = Supervisor(handle_errors=False)
-        
+
         # Create a mock handler
         mock_handler = mock.Mock()
         supervisor.add_message_handler(mock_handler)
-        
+
         # Notify
         msg = MessageDetails()
         msg.message = "Test"
         supervisor.notify(msg)
-        
+
         # Verify handler was called
         mock_handler.send_message.assert_called_once_with(msg)
-    
+
     def test_supervisor_global_exception_handler(self, mocker):
         """Test the global exception handler"""
         # Create supervisor with a mock logger
         mock_logger = mocker.Mock()
         supervisor = Supervisor(handle_errors=False, logger=mock_logger, log_path="/tmp/test.log")
-        
+
         # Get the exception handler
         exception_handler = supervisor._manage_exceptions()
-        
+
         # Create a mock handler to receive notifications
         mock_handler = mocker.Mock()
         supervisor.add_message_handler(mock_handler)
-        
+
         # Trigger an exception
         try:
             raise ValueError("Test error")
         except ValueError:
             import sys
+
             exc_info = sys.exc_info()
             exception_handler(*exc_info)
-        
+
         # Verify logger was called
         assert mock_logger.error.call_count == 2
-        
+
         # Verify notification was sent
         mock_handler.send_message.assert_called_once()
         call_args = mock_handler.send_message.call_args[0][0]
@@ -1548,36 +1511,36 @@ class TestModelsCoverage:
 
 class TestMessageHandlersCoverage:
     """Additional tests to improve message_handlers.py coverage"""
-    
+
     def test_email_handler_send_message(self, mocker):
         """Test EmailHandler.send_message to cover SMTP lines"""
         # Create a mock SMTP instance
         mock_smtp_instance = mocker.MagicMock()
         mock_smtp_class = mocker.MagicMock(return_value=mock_smtp_instance)
-        
+
         # Patch SMTP class
         mocker.patch("supervisor.message_handlers.SMTP", mock_smtp_class)
-        
+
         email_settings = {
             "from_address": "test@example.com",
             "to_addresses": "recipient@example.com",
             "smtpServer": "smtp.example.com",
-            "smtpPort": 25
+            "smtpPort": 25,
         }
-        
+
         handler = message_handlers.EmailHandler(email_settings, "TestApp", "1.0")
-        
+
         msg_details = MessageDetails()
         msg_details.message = "Test message"
         msg_details.subject = "Test subject"
-        
+
         handler.send_message(msg_details)
-        
+
         # Verify SMTP was instantiated and used as context manager
         mock_smtp_class.assert_called_once_with("smtp.example.com", 25)
         mock_smtp_instance.__enter__.assert_called_once()
         mock_smtp_instance.__exit__.assert_called_once()
-        
+
         # Verify sendmail was called
         assert mock_smtp_instance.__enter__().sendmail.called
 

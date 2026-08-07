@@ -22,7 +22,7 @@ See `api.md` for an in-depth description of Supervisor and how it's used.
 1. Set up your working environment
    - `conda activate PROJECT_NAME`
    - `cd c:\root\path\where\you\store\your\code` (ie, `cd c:\gis\git`)
-1. Install supervisor (or add to your project's `setup.py`)
+1. Install supervisor (or add it to your project's dependencies)
    - `pip install ugrc-supervisor`
 1. In your script's entry point code (usually `main.py`), as early as possible and generally before any arg parsing:
    - (Optional) Set up a logger, which is used to log any errors your code doesn't handle and `Supervisor` catches.
@@ -86,14 +86,3 @@ supervisor's error handler will catch all errors that your code doesn't handle. 
 1. Install in development mode
    - `cd supervisor`
    - `pip install -e ".[tests]"`
-
-## Update pypi
-
-**Make sure there are no secrets stored anywhere in the source tree, including files in .gitignore**
-
-1. Delete everything in `dist/`
-1. Make sure you've updated the version number in `setup.py`
-1. Recreate the wheels:
-   - `python setup.py sdist bdist_wheel`
-1. Re-upload the new files
-   - `twine upload dist/*`
