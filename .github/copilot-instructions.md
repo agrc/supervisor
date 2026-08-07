@@ -28,6 +28,7 @@ Supervisor is a Python module for monitoring scheduled processes, catching error
 ## Code Style and Conventions
 
 ### Python Style
+
 - Line length: 120 characters (configured in ruff)
 - Indentation: 4 spaces for Python files
 - Use type hints where appropriate (e.g., `handler: MessageHandler`)
@@ -35,6 +36,7 @@ Supervisor is a Python module for monitoring scheduled processes, catching error
 - Use pylint disable comments sparingly and only when necessary (e.g., `# pylint: disable=invalid-name`)
 
 ### Documentation
+
 - Use docstrings for all classes and public methods
 - Follow NumPy/SciPy docstring format with sections:
   - Brief description
@@ -44,6 +46,7 @@ Supervisor is a Python module for monitoring scheduled processes, catching error
   - `Methods` for public methods in class docstrings
 
 ### Error Handling
+
 - Use warnings for non-critical issues that shouldn't stop execution
 - Gracefully handle missing configuration (e.g., `warnings.warn()` and return early)
 - Catch specific exceptions and handle them appropriately
@@ -58,15 +61,18 @@ For detailed guidelines on commit types, scopes, and formatting rules, see the <
 ## Development Workflow
 
 ### Environment Setup
+
 - Standard Python environment (Python 3.x)
 - Install in development mode: `pip install -e ".[tests]"`
 
 ### Dependencies
+
 - **Core**: `sendgrid==6.*`
 - **Testing**: pytest suite with coverage, mocking, and instant failure reporting
 - **Linting**: ruff for code quality
 
 ### Testing
+
 - Tests located in `tests/` directory
 - Use pytest with coverage tracking
 - Run tests with: `pytest`
@@ -95,20 +101,24 @@ For detailed guidelines on commit types, scopes, and formatting rules, see the <
 ## Important Considerations
 
 ### Error Handling Philosophy
+
 - Supervisor should never crash the client script due to notification failures
 - Use `warnings.warn()` instead of raising exceptions for configuration issues
 - Return early from `send_message()` if settings are invalid
 
 ### Version Reporting
+
 - Handlers can report client project name and version in messages
 - Use `client_name` and `client_version` parameters in handler constructors
 
 ### Backwards Compatibility
+
 - This is a published PyPI package (`ugrc-supervisor`)
 - Maintain backwards compatibility when modifying public APIs
-- Update version in `src/supervisor/version.py` for releases
+- The version number in `pyproject.toml` is updated automatically by the release bot; do not manually change it
 
 ### File Operations
+
 - Prefer `pathlib.Path` for internal file operations
 - **Always** support both string paths and Path objects as input for backwards compatibility
 - Convert string inputs to Path objects when needed: `Path(attachment)`
