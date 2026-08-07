@@ -1,0 +1,35 @@
+name: Test and coverage
+description: Set up Python, run lint and tests, and upload coverage to Codecov.
+
+inputs:
+  codecov-token:
+    description: Token used to upload coverage to Codecov.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6.2.0
+      with:
+        python-version-file: .python-version
+        cache: pip
+        cache-dependency-path: pyproject.toml
+
+    - name: Install module
+      shell: bash
+      run: pip install .[tests]
+
+    - name: Lint
+      shell: bash
+      run: ruff check --output-format=github .
+
+    - name: Run tests
+      shell: bash
+      run: pytest
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v7
+      with:
+        token: ${{ inputs.codecov-token }}
+        files: ./cov.xml
