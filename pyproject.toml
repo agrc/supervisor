@@ -9,4 +9,4 @@ norecursedirs = [".env", "data", "maps", ".github", ".vscode"]
 console_output_style = "count"
 addopts = "--cov-branch --cov=supervisor --cov-report term --cov-report xml:cov.xml --instafail -p no:faulthandler"
 [build-system]
-requires = ["setuptools >= 70.2"]
+requires = ["setuptools >= 83.0.0"]
