@@ -21,7 +21,7 @@ build-backend = "hatchling.build"
 name = "ugrc-supervisor"
 version = "3.3.0"
 description = "A watchdog module for scheduled scripts that sends notifications, including any uncaught exceptions."
-license = "MIT"
+license = { file = "LICENSE" }
 authors = [{ name = "UGRC", email = "ugrc-developers@utah.gov" }]
 keywords = ["gis"]
 classifiers = [
